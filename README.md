@@ -6,6 +6,9 @@
 
 **Küresel Dijital Egemenlik, Dağıtık Yapay Zeka ve İnsani Teknoloji Mimarisi**
 
+> *"Makinelerin insan gibi düşünebilmesi için, onların sadece verilen formülleri uygulaması yetmez. Tıpkı insan gibi, kendi kendilerine amaç edinebilmeleri, kavramsal genellemeler yapabilmeleri ve felsefi bir şuura yaklaşabilmeleri gerekir."*  
+> — **Ord. Prof. Dr. Cahit Arf (1959 - "Makine Düşünebilir mi?" Konferansı)**
+
 > *"Hayatın ve varoluşun sadece sayılarla ve formüllerle ölçülebileceğini sananlar, insanın ruhunu ve şuurunu makinelere kurban edenlerdir. Bizler makinelerin efendisi olmalıyız, kölesi değil."*  
 > — **Aliya İzzetbegoviç**
 
@@ -77,14 +80,18 @@ Büyük modellerdeki ilerleme vizyonumuz, teravatlarca enerji tüketen ruhsuz ve
 * **Federated Learning (FedAvg):** Verilerimizi tekellerin sunucularına teslim etmek yerine, verinin kendi kurumlarımızda ve sınırlarımız içinde kaldığı dağıtık öğrenme ağları kuruyoruz.
 * **Merkeziyetsiz Ağırlık Birleştirme:** Algoritmalar mahremiyeti koruyarak uç düğümlerde (node) öğrenir. Sunucuya ham veri yerine sadece eğitilmiş model parametreleri (ağırlıklar) gönderilir ve bu ağırlıklar FedAvg protokolüyle birleştirilerek küresel modele aktarılır.
 
+### 4. Kuantum Özellik Haritalama (Quantum Feature Map)
+
+Nizam-AI, geleceğin hesaplama altyapılarına bugünden hazırdır:
+* **Qiskit ile Kübit Kodlaması:** Girdileri kuantum durumlarına (superposition) taşıyan, Ry rotasyonları ve CNOT dolaşıklık (entanglement) kapıları kullanan bir kuantum özellik katmanı barındırır.
+* **Milli Güvenlik ve Şifreleme:** Kuantum sonrası kriptografi (PQC) adımlarını simüle eden ve veri transferlerini kuantum gürültüsüne karşı koruyan koruyucu katmanlar sunar.
+* **Matematiksel Simülasyon Fallback'i:** Kuantum donanımı veya simülatörü (Qiskit-Aer) bulunmayan cihazlarda, matematiksel unitary matris çarpımları kullanarak 1-to-1 uyumlulukta çalışmaya devam eder.
+
 ---
 
 ## 🌍 Uygulama Alanları ve Sektörel Pilotlar
 
 ### 🛡️ 1. Savunma ve Elektronik Harp (Nizam-Swarm)
-
-> *"İstikbal göklerdedir; çünkü göklerini koruyamayan milletler yarınlarını asla güvence altına alamazlar."*  
-> — **Mustafa Kemal Atatürk**
 
 * **Simülasyon Detayları:** `nizam/pilots/defense.py` bünyesindeki multi-agent İHA simülasyonumuz, merkezi bir kontrol istasyonuna ihtiyaç duymadan, yerel RF haberleşme menzillerinde otonom sürü (swarm) zekasıyla hareket eder.
 * **Elektronik Harp Dayanıklılığı:** Sinyal kesici (jamming) unsurlar algılandığında, otonom düğümler yerel kararlar alarak kaçış ve üsse dönüş manevralarını tamamen lokal algoritmalarla çalıştırır.
@@ -114,9 +121,6 @@ Nizam-AI mimarisi, küresel dijital tahakkümü yıkmak üzere Teknofest kuşağ
 
 ## 🔮 Gelecek Planları ve Yol Haritamız (Geleceği Tasarlamak)
 
-> *"Geleceği tahmin etmenin en iyi yolu onu inşa etmektir."*  
-> — **Alan Kay**
-
 Nizam-AI'yi önümüzdeki yıllarda küresel bir standart haline getirmek için vizyonumuz dört ana aşamada planlanmıştır:
 
 ```mermaid
@@ -129,6 +133,7 @@ graph TD
 ### 📅 Aşama 1: Çekirdek ve Web Orkestrasyonu (2026) - **Tamamlandı**
 * [x] C++ çekirdek mantık motorunun yazılması.
 * [x] Python orkestrasyon katmanının ve ctypes bağlantılarının kurulması.
+* [x] Kuantum Özellik Haritalama (Quantum Feature Map) modülünün Qiskit entegrasyonuyla yazılması.
 * [x] Otonom İHA sürü simülasyonu, onkoloji tarayıcı ve eğitim asistanı pilotlarının kodlanması.
 * [x] Flask tabanlı etkileşimli, neon-cam (glassmorphic) tasarımlı web dashboard'unun entegrasyonu.
 * [x] Birim testleri (`tests_nizam/`) ve edge benchmark altyapısının kurulması.
@@ -179,6 +184,16 @@ Tüm işlemleri tek bir komut satırı arayüzünden (CLI) yönetebilirsiniz:
    python nizam_cli.py --dashboard
    ```
    Web arayüzü başlatıldıktan sonra tarayıcınızda **http://127.0.0.1:5000** adresine giderek sürü İHA simülasyonunu, dağıtık öğrenme yuvarlaklarını, Küre ansiklopedisini ve T3AI entegrasyonlarını test edebilirsiniz.
+
+### 🔨 C++ Çekirdek Derleme Kılavuzu
+
+Eğer sisteminizde C++ derleyicisi ve CMake yüklü ise, yüksek performanslı matematik çekirdeğini yerel ikili dosyaya (binary) derlemek için:
+
+```bash
+python build_core.py
+```
+
+Bu script, projenin en kökünde yer alan `CMakeLists.txt` dosyasını okuyarak otomatik derleme adımlarını gerçekleştirecek ve derlenen `.dll` veya `.so` dosyasını `nizam/` modülünün altına taşıyacaktır. Derleyici olmasa dahi Python orkestrasyonu otomatik fallback moduna geçerek sorunsuz çalışacaktır.
 
 ---
 

@@ -110,3 +110,26 @@ class HybridAIModel:
         dequantized_flat = dequantize_int8(quantized_flat.tolist(), scale, zero_point)
         self.weights = dequantized_flat.reshape(self.weights.shape)
         return len(flat_weights)  # Return number of quantized params
+
+    def predict_quantum(self, features, statistical_weight=0.6, force_symbolic=True):
+        """
+        Quantum-enhanced Hybrid AI prediction:
+        1. Encodes classical features into a quantum state vector representation.
+        2. Performs classification on the quantum-state feature map.
+        3. Combines with symbolic logic constraints.
+        """
+        from nizam.quantum import QuantumFeatureMap
+        qmap = QuantumFeatureMap(num_qubits=2)
+        q_features = qmap.get_quantum_features(features)
+        
+        # Pad or slice quantum features to match the network input dimension
+        if q_features.shape[0] < self.num_features:
+            q_features = np.pad(q_features, (0, self.num_features - q_features.shape[0]), 'constant')
+        else:
+            q_features = q_features[:self.num_features]
+            
+        pred_class, confidence, telemetry = self.predict(q_features.tolist(), statistical_weight, force_symbolic)
+        telemetry["quantum_mapping_applied"] = True
+        telemetry["quantum_feature_state"] = q_features.tolist()
+        return pred_class, confidence, telemetry
+

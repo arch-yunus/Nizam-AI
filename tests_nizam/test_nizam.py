@@ -130,5 +130,19 @@ class TestNizamAI(unittest.TestCase):
         edu_res = edu.assess_student_state(90.0, 95.0, 95.0, 10.0)
         self.assertEqual(edu_res["recommended_mode"], "ChallengeMode")
 
+    def test_quantum_integration(self):
+        from nizam.quantum import QuantumFeatureMap
+        qmap = QuantumFeatureMap(num_qubits=2)
+        q_feats = qmap.get_quantum_features([0.5, -0.2])
+        self.assertEqual(len(q_feats), 4) # 2^2 = 4 state probabilities
+        self.assertAlmostEqual(sum(q_feats), 1.0, places=4)
+
+        # Test predict_quantum
+        model = HybridAIModel(num_features=4, classes=['class1', 'class2'])
+        pred, conf, telemetry = model.predict_quantum([0.5, -0.2])
+        self.assertIn(pred, ['class1', 'class2'])
+        self.assertTrue(telemetry["quantum_mapping_applied"])
+        self.assertEqual(len(telemetry["quantum_feature_state"]), 4)
+
 if __name__ == '__main__':
     unittest.main()

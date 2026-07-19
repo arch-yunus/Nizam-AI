@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nizam-AI // Dağıtık Egemen Yapay Zeka Mimarisi</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Background Glow elements -->
+    <div class="glow-bg-1"></div>
+    <div class="glow-bg-2"></div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-circle">
+                    <i class="fa-solid fa-brain-circuit icon-glow"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>NİZAM-AI</h1>
+                    <span>ARAT Girişimi</span>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-tab="dashboard">
+                    <i class="fa-solid fa-gauge-high"></i> Sistem Telemetrisi
+                </button>
+                <button class="nav-btn" data-tab="swarm">
+                    <i class="fa-solid fa-drone"></i> Sürü Harp Simülatörü
+                </button>
+                <button class="nav-btn" data-tab="health">
+                    <i class="fa-solid fa-dna"></i> Sağlık ve Tanı
+                </button>
+                <button class="nav-btn" data-tab="education">
+                    <i class="fa-solid fa-graduation-cap"></i> Kişisel Eğitim
+                </button>
+                <button class="nav-btn" data-tab="federated">
+                    <i class="fa-solid fa-network-wired"></i> Dağıtık Öğrenme
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="node-info">
+                    <i class="fa-solid fa-circle-check text-emerald"></i>
+                    <span>Çekirdek Mod: <strong>Python-Fallback (20W)</strong></span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header bar -->
+            <header class="content-header">
+                <div class="header-title">
+                    <h2 id="tab-title">Sistem Telemetrisi</h2>
+                    <p id="tab-subtitle">Yerel Edge Cihaz Güç ve Kaynak Tüketim Analizleri</p>
+                </div>
+                <div class="header-actions">
+                    <div class="kure-search">
+                        <i class="fa-solid fa-book-atlas"></i>
+                        <input type="text" id="kure-query-input" placeholder="Küre Ansiklopedisi Ara..." value="quantization_loss">
+                        <button id="kure-search-btn">Sorgula</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- TAB 1: DASHBOARD TELEMETRY -->
+            <section class="tab-content active" id="tab-dashboard">
+                <div class="grid-layout">
+                    <!-- Telemetry Cards -->
+                    <div class="glass-card col-4">
+                        <div class="card-header">
+                            <h3>Nizam Edge Güç Tüketimi</h3>
+                            <i class="fa-solid fa-bolt text-cyan"></i>
+                        </div>
+                        <div class="card-value"><span id="power-nizam">20</span> W</div>
+                        <div class="card-desc">İnsansı verimli soyutlama algoritmalarıyla optimize edilmiş güç sınırı.</div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill bg-cyan" style="width: 6.6%;"></div>
+                        </div>
+                        <div class="card-footer-text">Geleneksel GPU sunucularına göre %93 tasarruflu.</div>
+                    </div>
+
+                    <div class="glass-card col-4">
+                        <div class="card-header">
+                            <h3>Klasik Sunucu Tüketimi</h3>
+                            <i class="fa-solid fa-server text-rose"></i>
+                        </div>
+                        <div class="card-value"><span id="power-traditional">300</span> W</div>
+                        <div class="card-desc">Kaba bulut modelleri ve verimsiz sunucu işlem yükleri.</div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill bg-rose" style="width: 100%;"></div>
+                        </div>
+                        <div class="card-footer-text">Yüksek karbon ayak izi ve bulut bağımlılığı.</div>
+                    </div>
+
+                    <div class="glass-card col-4">
+                        <div class="card-header">
+                            <h3>Uç Cihaz Pil Ömrü (Tahmini)</h3>
+                            <i class="fa-solid fa-battery-three-quarters text-emerald"></i>
+                        </div>
+                        <div class="card-value"><span id="battery-hours">0.93</span> Saat</div>
+                        <div class="card-desc">5000 mAh standart mobil pil üzerinden tam yük çalışma süresi.</div>
+                        <div class="battery-comparison">
+                            <div class="comp-item">
+                                <span>Nizam-AI:</span>
+                                <strong id="runtime-nizam" class="text-emerald">0.93 sa</strong>
+                            </div>
+                            <div class="comp-item">
+                                <span>Klasik:</span>
+                                <strong id="runtime-traditional" class="text-rose">0.06 sa</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RAM and CPU Real telemetry -->
+                    <div class="glass-card col-6">
+                        <div class="card-header">
+                            <h3>Bellek Kullanımı (RAM)</h3>
+                            <i class="fa-solid fa-memory text-violet"></i>
+                        </div>
+                        <div class="ram-chart-container">
+                            <div class="gauge-display">
+                                <span id="real-ram">--</span> MB
+                            </div>
+                            <p>Çalışan Python prosesinin fiziksel RAM tüketimi (RSS).</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-card col-6">
+                        <div class="card-header">
+                            <h3>İşlemci Yükü (CPU)</h3>
+                            <i class="fa-solid fa-microchip text-amber"></i>
+                        </div>
+                        <div class="ram-chart-container">
+                            <div class="gauge-display">
+                                <span id="real-cpu">--</span> %
+                            </div>
+                            <p>Sistem genelinde anlık CPU kullanım yüzdesi.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: SWARM TACTICAL SIMULATION -->
+            <section class="tab-content" id="tab-swarm">
+                <div class="swarm-layout">
+                    <!-- Canvas Area -->
+                    <div class="canvas-container glass-card">
+                        <div class="canvas-header">
+                            <span class="status-indicator live">🟢 CANLI SIMÜLASYON</span>
+                            <div class="canvas-legend">
+                                <span><span class="legend-color target"></span> Hedef</span>
+                                <span><span class="legend-color drone"></span> Nizam-UAV</span>
+                                <span><span class="legend-color base"></span> Üs (0,0)</span>
+                            </div>
+                        </div>
+                        <canvas id="swarm-canvas" width="700" height="420"></canvas>
+                    </div>
+
+                    <!-- Control Panel Sidebar -->
+                    <div class="swarm-controls glass-card">
+                        <h3>Sürü Taktik Kumanda</h3>
+                        <p class="desc">Uç düğümlerdeki yerel Hybrid-AI kararları ile otonom hedef takibi.</p>
+                        
+                        <div class="control-actions">
+                            <button id="toggle-jamming-btn" class="action-btn red">
+                                <i class="fa-solid fa-tower-broadcast"></i> Elektronik Karıştırma Başlat
+                            </button>
+                        </div>
+
+                        <div class="simulation-telemetry">
+                            <h4>Ortak Sürü Telemetrisi</h4>
+                            <div class="telemetry-item">
+                                <span>Durum:</span>
+                                <strong id="swarm-status">Aktif Takip</strong>
+                            </div>
+                            <div class="telemetry-item">
+                                <span>Anlık Tüketim (Sürü):</span>
+                                <strong id="swarm-energy-nizam" class="text-cyan">0.00 J</strong>
+                            </div>
+                            <div class="telemetry-item">
+                                <span>Klasik Alternatif Tüketim:</span>
+                                <strong id="swarm-energy-trad" class="text-rose">0.00 J</strong>
+                            </div>
+                            <div class="telemetry-item">
+                                <span>Verimlilik Çarpanı:</span>
+                                <strong id="swarm-gain" class="text-emerald">--</strong>
+                            </div>
+                        </div>
+
+                        <div class="drone-status-list" id="drone-statuses">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: HEALTH AND DIAGNOSTICS -->
+            <section class="tab-content" id="tab-health">
+                <div class="grid-layout">
+                    <!-- Oncology Scanner form -->
+                    <div class="glass-card col-6">
+                        <h3>Hücresel Onkoloji Tarayıcı</h3>
+                        <p class="desc">Uç cihaz üzerinde, float32 yerine int8 nicemlenmiş modellerle milisaniyeler altında kanser hücresi ön tanısı.</p>
+                        
+                        <form id="health-form" class="dashboard-form">
+                            <div class="form-group">
+                                <label for="cell-area">Hücre Alanı (Area - px)</label>
+                                <input type="number" id="cell-area" value="550" min="50" max="1500">
+                            </div>
+                            <div class="form-group">
+                                <label for="cell-perimeter">Çevre Genişliği (Perimeter - px)</label>
+                                <input type="number" id="cell-perimeter" value="45" min="5" max="300">
+                            </div>
+                            <div class="form-group">
+                                <label for="cell-texture">Doku Düzensizliği (Texture Score 0-1)</label>
+                                <input type="number" step="0.05" id="cell-texture" value="0.75" min="0" max="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="cell-mitotic">Mitoz İndeksi (Mitotic Score 0-1)</label>
+                                <input type="number" step="0.05" id="cell-mitotic" value="0.6" min="0" max="1">
+                            </div>
+                            <button type="submit" class="action-btn cyan-glow-btn">
+                                <i class="fa-solid fa-stethoscope"></i> Analiz Et ve Raporla
+                            </button>
+                        </form>
+
+                        <div id="health-result-card" class="result-box hide">
+                            <h4>Teşhis Sonucu: <strong id="diagnose-output">--</strong></h4>
+                            <div class="result-details">
+                                <p>Karar Güveni: <span id="diagnose-conf">--</span></p>
+                                <p>Simüle Edilen Enerji Tasarrufu: <span id="diagnose-energy" class="text-emerald">--</span></p>
+                                <div class="badge-rules text-cyan" id="diagnose-rule-flag">
+                                    <i class="fa-solid fa-shield-halved"></i> Sembolik Kural Kısıtı Doğrulandı
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Drug Discovery simulator -->
+                    <div class="glass-card col-6">
+                        <h3>Moleküler İlaç Eşleştirme (Smart Drug Discovery)</h3>
+                        <p class="desc">Virüs protein bağlarına karşı 1-bit binary nicemleme ile 64 kat hızlı ön tarama yapan Edge AI kütüphanesi.</p>
+                        
+                        <div class="control-actions">
+                            <button id="screen-drugs-btn" class="action-btn violet-glow-btn">
+                                <i class="fa-solid fa-flask-vial"></i> Kimyasal Kütüphaneyi Tara
+                            </button>
+                        </div>
+
+                        <div class="table-container">
+                            <table class="data-table" id="drugs-table">
+                                <thead>
+                                    <tr>
+                                        <th>Bileşik Kimliği</th>
+                                        <th>FP Benzerlik</th>
+                                        <th>Binary Eşleşme</th>
+                                        <th>Potansiyel</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="4" class="text-center">Tarama henüz başlatılmadı.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: EDUCATION SYSTEM -->
+            <section class="tab-content" id="tab-education">
+                <div class="grid-layout">
+                    <!-- Student metrics form -->
+                    <div class="glass-card col-5">
+                        <h3>Kişiselleştirilmiş Öğrenme Asistanı</h3>
+                        <p class="desc">Öğrencinin anlık dikkat, yorgunluk ve başarı metriklerine göre müfredatı ve soru zorluğunu yerelde adapte eden yapay zeka.</p>
+                        
+                        <form id="education-form" class="dashboard-form">
+                            <div class="form-group">
+                                <label for="std-attention">Dikkat Seviyesi (%)</label>
+                                <input type="range" id="std-attention" min="0" max="100" value="85">
+                                <span class="range-val" id="std-attention-val">85%</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="std-math">Matematik Başarı Skoru (0-100)</label>
+                                <input type="range" id="std-math" min="0" max="100" value="70">
+                                <span class="range-val" id="std-math-val">70</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="std-science">Fen Bilimleri Başarı Skoru (0-100)</label>
+                                <input type="range" id="std-science" min="0" max="100" value="80">
+                                <span class="range-val" id="std-science-val">80</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="std-fatigue">Yorgunluk Seviyesi (%)</label>
+                                <input type="range" id="std-fatigue" min="0" max="100" value="15">
+                                <span class="range-val" id="std-fatigue-val">15%</span>
+                            </div>
+                            <button type="submit" class="action-btn emerald-glow-btn">
+                                <i class="fa-solid fa-graduation-cap"></i> Durumu Değerlendir ve Soru Üret
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Chat/Response interface -->
+                    <div class="glass-card col-7">
+                        <h3>T3AI Destekli Akıllı Soru Panel</h3>
+                        <p class="desc">Nizam-AI kararlarına göre milli T3AI dil modeli üzerinden özelleştirilmiş Türkçe eğitim içeriği.</p>
+                        
+                        <div class="chat-display" id="chat-display">
+                            <div class="chat-bubble bot">
+                                <p>Merhaba! Soldaki panelden öğrenci metriklerini girip "Değerlendir" butonuna bastığınızda, duruma uygun milli eğitim sorusu T3AI modelimiz tarafından üretilecektir.</p>
+                            </div>
+                        </div>
+
+                        <div class="chat-input-area">
+                            <input type="text" id="custom-t3ai-input" placeholder="T3AI'a doğrudan soru sor (örn: Nizam-AI nedir?)...">
+                            <button id="custom-t3ai-btn"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: FEDERATED LEARNING -->
+            <section class="tab-content" id="tab-federated">
+                <div class="federated-layout">
+                    <!-- Network nodes -->
+                    <div class="nodes-visualizer glass-card">
+                        <h3>Dağıtık Düğümler (Federated Nodes Network)</h3>
+                        <p class="desc">Veriler sınırlar içinde/kurumda kalır, sadece eğitilen model ağırlıkları paylaşılır.</p>
+                        
+                        <div class="nodes-grid">
+                            <div class="node-box" id="node-Tubitak-Node">
+                                <i class="fa-solid fa-building-columns node-icon"></i>
+                                <h4>TÜBİTAK Node</h4>
+                                <span>Veri Güvenli</span>
+                            </div>
+                            <div class="node-box" id="node-Aselsan-Node">
+                                <i class="fa-solid fa-shield-halved node-icon"></i>
+                                <h4>ASELSAN Node</h4>
+                                <span>Harp Verileri</span>
+                            </div>
+                            <div class="node-box" id="node-Havelsan-Node">
+                                <i class="fa-solid fa-network-wired node-icon"></i>
+                                <h4>HAVELSAN Node</h4>
+                                <span>Simülasyon</span>
+                            </div>
+                            <div class="node-box" id="node-Roketsan-Node">
+                                <i class="fa-solid fa-rocket node-icon"></i>
+                                <h4>ROKETSAN Node</h4>
+                                <span>Taktik Veriler</span>
+                            </div>
+                        </div>
+
+                        <div class="network-action-container">
+                            <button id="fl-round-btn" class="action-btn border-neon">
+                                <i class="fa-solid fa-rotate"></i> Federated Averaging (FedAvg) Yuvarlağı Çalıştır
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stats console -->
+                    <div class="stats-console glass-card">
+                        <h3>Federasyon Konsolu & En Sosyal Entegrasyonu</h3>
+                        
+                        <div class="fl-stats">
+                            <div class="stat-row">
+                                <span>Çalıştırılan Yuvarlak:</span>
+                                <strong id="fl-round-count">0</strong>
+                            </div>
+                            <div class="stat-row">
+                                <span>Küresel Ağırlık Normu:</span>
+                                <strong id="fl-weight-norm" class="text-violet">--</strong>
+                            </div>
+                            <div class="stat-row">
+                                <span>Aktif Katılımcı Düğümler:</span>
+                                <strong id="fl-active-nodes">Tümü</strong>
+                            </div>
+                            <div class="stat-row">
+                                <span>Veri Güvenlik Modu:</span>
+                                <strong id="fl-privacy" class="text-emerald">--</strong>
+                            </div>
+                        </div>
+
+                        <h4>En Sosyal Canlı Akış</h4>
+                        <p class="desc">Toxicity bulunmayan, doğrulanmış kurumsal haber ağından son paylaşımlar.</p>
+                        <div class="social-stream" id="social-posts">
+                            <div class="post-item empty">
+                                <p>Sosyal ağda henüz paylaşım yok. FL yuvarlağını çalıştırdığınızda buraya otomatik kurumsal bültenler düşecektir.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Alert Modal / Popup for Kure facts -->
+    <div id="kure-modal" class="modal hide">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-book-bookmark text-amber"></i> Küre Bilgi Ansiklopedisi</h3>
+                <span class="close-btn" id="close-modal-btn">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p><strong>Arama Terimi:</strong> <span id="modal-keyword">--</span></p>
+                <p id="modal-fact" class="fact-text">--</p>
+                <div class="modal-footer">
+                    <span id="modal-source" class="badge">--</span>
+                    <span id="modal-date" class="badge-grey">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Javascript Code -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

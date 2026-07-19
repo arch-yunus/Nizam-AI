@@ -1,5 +1,9 @@
 # Nizam-AI
 
+<p align="center">
+  <img src="assets/nizam_ai_banner.png" alt="Nizam-AI Banner" width="100%">
+</p>
+
 **Küresel Dijital Egemenlik, Dağıtık Yapay Zeka ve İnsani Teknoloji Mimarisi**
 
 > *"Hayatın ve varoluşun sadece sayılarla ve formüllerle ölçülebileceğini sananlar, insanın ruhunu ve şuurunu makinelere kurban edenlerdir. Bizler makinelerin efendisi olmalıyız, kölesi değil."*  
@@ -65,6 +69,10 @@ Büyük modellerdeki ilerleme vizyonumuz, teravatlarca enerji tüketen ruhsuz ve
 * **Sıfır Gecikme, Maksimum Gizlilik:** Sensör verisi yerelde işlenir, kararlar anlık olarak cihaz üzerinde verilir. Tedarik zincirlerine sızdırılan bombalarla cepteki cihazların birer silaha dönüşebildiği bu çağda, donanım seviyesinden yazılım katmanına kadar **tam denetlenebilir açık kaynak** modelini şart koşuyoruz.
 
 ### 3. Dağıtık Ağlar ve Veri Mahremiyeti (Distributed Learning)
+
+<p align="center">
+  <img src="assets/nizam_nodes_banner.png" alt="Nizam-AI Decentralized Nodes Network" width="100%">
+</p>
 
 * **Federated Learning (FedAvg):** Verilerimizi tekellerin sunucularına teslim etmek yerine, verinin kendi kurumlarımızda ve sınırlarımız içinde kaldığı dağıtık öğrenme ağları kuruyoruz.
 * **Merkeziyetsiz Ağırlık Birleştirme:** Algoritmalar mahremiyeti koruyarak uç düğümlerde (node) öğrenir. Sunucuya ham veri yerine sadece eğitilmiş model parametreleri (ağırlıklar) gönderilir ve bu ağırlıklar FedAvg protokolüyle birleştirilerek küresel modele aktarılır.

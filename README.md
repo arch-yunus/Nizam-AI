@@ -1,7 +1,9 @@
 # Nizam-AI
 
 <p align="center">
-  <img src="assets/nizam_ai_banner.png" alt="Nizam-AI Banner" width="100%">
+  <img src="assets/nizam_ai_banner.png" alt="Nizam-AI Sovereign Banner" width="100%">
+  <br>
+  <em>"Kendi dijital geleceğine ve adaletli bir nizam anlayışına adanmış özgür zihinlerin sarsılmaz kalesi."</em>
 </p>
 
 **Küresel Dijital Egemenlik, Dağıtık Yapay Zeka ve İnsani Teknoloji Mimarisi**

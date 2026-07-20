@@ -137,6 +137,7 @@ graph TD
 * [x] Python orkestrasyon katmanının ve ctypes bağlantılarının kurulması.
 * [x] Kuantum Özellik Haritalama (Quantum Feature Map) modülünün Qiskit entegrasyonuyla yazılması.
 * [x] Siber Güvenlik (PQC İmza Doğrulama, Byzantine Defansı) ve yerel SQLite veri tabanı motorunun (`nizam/storage.py`) yazılması.
+* [x] Otonom Robotik için Extended Kalman Filter (EKF) seyrüsefer motorunun (`nizam/robotics.py`) ve PQC Hibrit Şifreleme Tünelinin (`nizam/pqc_tunnel.py`) yazılması.
 * [x] Otonom İHA sürü simülasyonu, onkoloji tarayıcı ve eğitim asistanı pilotlarının kodlanması.
 * [x] Flask tabanlı etkileşimli, neon-cam (glassmorphic) tasarımlı web dashboard'unun entegrasyonu.
 * [x] Birim testleri (`tests_nizam/`) ve edge benchmark altyapısının kurulması.
@@ -191,6 +192,11 @@ Tüm işlemleri tek bir komut satırı arayüzünden (CLI) yönetebilirsiniz:
 4. **Siber Güvenlik ve Yerel Veri Tabanı Raporu:**
    ```bash
    python nizam_cli.py --security
+   ```
+
+5. **Otonom Robotik EKF Seyir ve PQC Şifreleme Testi:**
+   ```bash
+   python nizam_cli.py --robotics
    ```
 
 ### 🔨 C++ Çekirdek Derleme Kılavuzu

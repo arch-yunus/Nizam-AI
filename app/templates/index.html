@@ -50,6 +50,9 @@
                 <button class="nav-btn" data-tab="security">
                     <i class="fa-solid fa-shield-halved"></i> Siber Güvenlik & DB
                 </button>
+                <button class="nav-btn" data-tab="robotics">
+                    <i class="fa-solid fa-robot"></i> Otonom Robotik & EKF
+                </button>
             </nav>
 
             <div class="sidebar-footer">
@@ -462,6 +465,82 @@
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 7: AUTONOMOUS ROBOTICS & EKF NAVIGATION -->
+            <section class="tab-content" id="tab-robotics">
+                <div class="grid-layout">
+                    <!-- EKF Telemetry cards -->
+                    <div class="glass-card col-4">
+                        <div class="card-header">
+                            <h3>EKF Kestirim Hatası</h3>
+                            <i class="fa-solid fa-location-crosshairs text-emerald"></i>
+                        </div>
+                        <div class="card-value"><span id="ekf-error-val">0.0</span> m</div>
+                        <div class="card-desc">Extended Kalman Filter yerel konum tahmin sapma miktarı.</div>
+                    </div>
+
+                    <div class="glass-card col-4">
+                        <div class="card-header">
+                            <h3>Ham GPS Sensör Hatası</h3>
+                            <i class="fa-solid fa-satellite text-rose"></i>
+                        </div>
+                        <div class="card-value"><span id="gps-error-val">0.0</span> m</div>
+                        <div class="card-desc">Elektronik gürültü altındaki ham sensör/GPS sapması.</div>
+                    </div>
+
+                    <div class="glass-card col-4">
+                        <div class="card-header">
+                            <h3>Konum Belirsizliği</h3>
+                            <i class="fa-solid fa-compass text-amber"></i>
+                        </div>
+                        <div class="card-value"><span id="ekf-uncertainty-val">0.0</span> m</div>
+                        <div class="card-desc">EKF kovaryans matrisinden hesaplanan varyans sınırı.</div>
+                    </div>
+
+                    <!-- Robotics controls and trajectory display -->
+                    <div class="glass-card col-6">
+                        <h3>Saha Taktik Kumandası & EW Karıştırma</h3>
+                        <p class="desc">GPS kesintisi yaşandığında eylemsiz seyrüsefer (INS) ile konum kestirimini sürdürme.</p>
+                        
+                        <div class="dashboard-form">
+                            <button id="toggle-robotics-gps-btn" class="action-btn red">
+                                <i class="fa-solid fa-satellite-dish"></i> GPS Kesintisi (EW Jamming) Oluştur
+                            </button>
+                            <button id="run-pqc-tunnel-btn" class="action-btn violet-glow-btn">
+                                <i class="fa-solid fa-lock"></i> PQC Kyber-1024 Tünel Şifreleme Testi
+                            </button>
+                        </div>
+
+                        <div class="simulation-telemetry">
+                            <h4>EKF Seyir Durumu</h4>
+                            <div class="telemetry-item">
+                                <span>Gerçek Konum (True Pos):</span>
+                                <strong id="robot-true-pos" class="text-cyan">X: 0, Y: 0</strong>
+                            </div>
+                            <div class="telemetry-item">
+                                <span>EKF Kestirim Konumu:</span>
+                                <strong id="robot-ekf-pos" class="text-emerald">X: 0, Y: 0</strong>
+                            </div>
+                            <div class="telemetry-item">
+                                <span>GPS Sinyal Durumu:</span>
+                                <strong id="robot-gps-status" class="text-cyan">Aktif (Sinyal Güçlü)</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PQC Tunnel console -->
+                    <div class="glass-card col-6">
+                        <h3>PQC Tünel & Kriptografik Şifreleme Konsolu</h3>
+                        <p class="desc">Ağ düğümleri arasında Kyber-1024 / Dilithium-5 ile şifrelenen paket çıktısı.</p>
+                        
+                        <div class="chat-display" id="pqc-console-display">
+                            <div class="chat-bubble bot">
+                                <p>PQC Tünel Testi henüz çalıştırılmadı. Soldaki butonla şifreleme ve imza doğrulama paketini test edebilirsiniz.</p>
+                            </div>
                         </div>
                     </div>
                 </div>

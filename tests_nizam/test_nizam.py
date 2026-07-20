@@ -175,5 +175,31 @@ class TestNizamAI(unittest.TestCase):
         self.assertEqual(len(logs), 1)
         self.assertEqual(logs[0]["event_type"], "TEST_EVENT")
 
+    def test_robotics_and_pqc_tunnel(self):
+        from nizam.robotics import ExtendedKalmanFilter, RobotKinematicsEngine
+        from nizam.pqc_tunnel import PQCHybridTunnel
+        
+        # Test EKF Filter
+        ekf = ExtendedKalmanFilter(dt=0.1)
+        ekf.predict(ax=1.0, ay=0.5)
+        ekf.update(gps_x=2.0, gps_y=1.0)
+        state = ekf.get_state()
+        self.assertIn("x", state)
+        self.assertIn("uncertainty_x", state)
+        
+        # Test Kinematics Engine
+        engine = RobotKinematicsEngine()
+        step_res = engine.step_simulation(gps_jammed=False)
+        self.assertEqual(step_res["step"], 1)
+        self.assertIsNotNone(step_res["noisy_gps"])
+
+        # Test PQC Tunnel
+        tunnel = PQCHybridTunnel("Node-A", "Node-B")
+        payload = {"cmd": "TAKTIK_ROTA", "val": 100}
+        pkt = tunnel.encrypt_packet(payload)
+        is_authentic, dec_payload = tunnel.decrypt_packet(pkt)
+        self.assertTrue(is_authentic)
+        self.assertEqual(dec_payload["cmd"], "TAKTIK_ROTA")
+
 if __name__ == '__main__':
     unittest.main()

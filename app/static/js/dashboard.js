@@ -11,7 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
         'health': { title: 'Sağlık ve Tanı', subtitle: 'Onkolojik Tarama ve Akıllı İlaç Keşfi Edge Analizi' },
         'education': { title: 'Kişiselleştirilmiş Eğitim', subtitle: 'Yerel Metriklerle Müfredat Adaptasyonu ve T3AI Entegrasyonu' },
         'federated': { title: 'Dağıtık Öğrenme Konsolu', subtitle: 'Privacy-Preserving Ağırlık Birleştirme (FedAvg) Yönetimi' },
-        'security': { title: 'Siber Güvenlik & Veri Tabanı', subtitle: 'PQC İmza Doğrulama, Byzantine Defansı ve Yerel SQLite Denetimi' }
+        'security': { title: 'Siber Güvenlik & Veri Tabanı', subtitle: 'PQC İmza Doğrulama, Byzantine Defansı ve Yerel SQLite Denetimi' },
+        'robotics': { title: 'Otonom Robotik & EKF Seyrüsefer', subtitle: 'Extended Kalman Filter ile Gürültülü Sensör Kestirimi ve PQC Tünelleme' }
     };
 
     navButtons.forEach(btn => {
@@ -36,6 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (tabName === 'security') {
                 fetchSecurityAudit();
+            }
+
+            if (tabName === 'robotics') {
+                fetchRoboticsStep();
             }
         });
     });
@@ -515,6 +520,70 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             })
             .catch(err => console.error("Security audit fetch error:", err));
+    }
+
+
+    // --- AUTONOMOUS ROBOTICS & EKF NAVIGATION ---
+    function fetchRoboticsStep() {
+        fetch('/api/robotics/step')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('ekf-error-val').textContent = data.ekf_error_m;
+                document.getElementById('gps-error-val').textContent = data.gps_jammed ? 'Sinyal Yok (EW)' : data.raw_gps_error_m;
+                document.getElementById('ekf-uncertainty-val').textContent = data.uncertainty_m;
+                
+                document.getElementById('robot-true-pos').textContent = `X: ${data.true_position.x}, Y: ${data.true_position.y}`;
+                document.getElementById('robot-ekf-pos').textContent = `X: ${data.ekf_estimated.x}, Y: ${data.ekf_estimated.y}`;
+                
+                const statusEl = document.getElementById('robot-gps-status');
+                if (data.gps_jammed) {
+                    statusEl.textContent = 'GPS Kesintisi (Ölü Seyir - INS Modu)';
+                    statusEl.className = 'text-amber';
+                } else {
+                    statusEl.textContent = 'Aktif (Sinyal Güçlü & EKF Güncelleniyor)';
+                    statusEl.className = 'text-cyan';
+                }
+            })
+            .catch(err => console.error("Robotics step error:", err));
+    }
+
+    const toggleRoboticsGpsBtn = document.getElementById('toggle-robotics-gps-btn');
+    if (toggleRoboticsGpsBtn) {
+        toggleRoboticsGpsBtn.addEventListener('click', () => {
+            fetch('/api/robotics/toggle-gps-jamming', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.gps_jammed) {
+                        toggleRoboticsGpsBtn.classList.add('active');
+                        toggleRoboticsGpsBtn.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> GPS Kesintisini Kaldır';
+                    } else {
+                        toggleRoboticsGpsBtn.classList.remove('active');
+                        toggleRoboticsGpsBtn.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> GPS Kesintisi (EW Jamming) Oluştur';
+                    }
+                    fetchRoboticsStep();
+                })
+                .catch(err => console.error("Toggle GPS error:", err));
+        });
+    }
+
+    const runPqcTunnelBtn = document.getElementById('run-pqc-tunnel-btn');
+    const pqcConsoleDisplay = document.getElementById('pqc-console-display');
+    if (runPqcTunnelBtn) {
+        runPqcTunnelBtn.addEventListener('click', () => {
+            fetch('/api/pqc/test-tunnel', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    const pkt = data.packet;
+                    let log = `<strong>PQC Kyber/Dilithium Tünel Testi:</strong> <span class="text-emerald">BAŞARILI</span><br><br>`;
+                    log += `<strong>Gönderici:</strong> ${pkt.sender} ➔ <strong>Alıcı:</strong> ${pkt.receiver}<br>`;
+                    log += `<strong>KEM:</strong> ${pkt.kem} | <strong>İmza:</strong> ${pkt.sig}<br>`;
+                    log += `<strong>Şifreli Paket:</strong> <span class="text-cyan">${pkt.ciphertext.substring(0, 32)}...</span><br>`;
+                    log += `<strong>Doğrulanan Özgün Veri:</strong> ${JSON.stringify(data.decrypted_payload)}`;
+                    
+                    pqcConsoleDisplay.innerHTML = `<div class="chat-bubble bot"><p>${log}</p></div>`;
+                })
+                .catch(err => console.error("PQC Tunnel test error:", err));
+        });
     }
 
 });

@@ -13,6 +13,8 @@ from nizam.pilots.health import EdgeDiagnosticsAssistant, SmartDrugDiscoverySimu
 from nizam.pilots.education import PersonalizedLearningAssistant
 from nizam.integrations import KureClient, T3AIClient, EnSosyalClient
 from nizam.storage import NizamDatabase
+from nizam.robotics import RobotKinematicsEngine
+from nizam.pqc_tunnel import PQCHybridTunnel
 
 app = Flask(__name__)
 
@@ -22,11 +24,15 @@ swarm_sim = UAVSwarmTacticalSimulator(num_drones=6)
 health_diag = EdgeDiagnosticsAssistant()
 drug_discovery = SmartDrugDiscoverySimulator()
 learning_assistant = PersonalizedLearningAssistant()
+robotics_engine = RobotKinematicsEngine()
 db = NizamDatabase()
 
 kure_client = KureClient()
 t3ai_client = T3AIClient()
 ensosyal_client = EnSosyalClient()
+
+# State variables
+robotics_gps_jammed = False
 
 # Federated learning setup
 fed_server = NizamFederatedServer(num_features=4, num_classes=3)
@@ -148,6 +154,38 @@ def security_audit():
     return jsonify({
         "audit_logs": logs,
         "summary": summary
+    })
+
+
+@app.route('/api/robotics/step', methods=['GET'])
+def robotics_step():
+    global robotics_gps_jammed
+    res = robotics_engine.step_simulation(gps_jammed=robotics_gps_jammed)
+    return jsonify(res)
+
+
+@app.route('/api/robotics/toggle-gps-jamming', methods=['POST'])
+def toggle_robotics_gps():
+    global robotics_gps_jammed
+    robotics_gps_jammed = not robotics_gps_jammed
+    db.log_security_event("ROBOTICS_GPS_JAMMING", "EKF-Nav-Engine", "WARNING" if robotics_gps_jammed else "NORMAL", f"GPS outage state set to {robotics_gps_jammed}")
+    return jsonify({"gps_jammed": robotics_gps_jammed})
+
+
+@app.route('/api/pqc/test-tunnel', methods=['POST'])
+def test_pqc_tunnel():
+    tunnel = PQCHybridTunnel("Aselsan-Node", "Roketsan-Node")
+    sample_data = {"telemetry": "TACTICAL_DRONE_POS", "coordinates": [40.1, 32.8], "status": "SECURE"}
+    
+    encrypted_packet = tunnel.encrypt_packet(sample_data)
+    is_valid, decrypted_data = tunnel.decrypt_packet(encrypted_packet)
+    
+    db.log_security_event("PQC_TUNNEL_TEST", "Aselsan->Roketsan", "SUCCESS" if is_valid else "FAILED", f"Decrypted payload matches: {is_valid}")
+    
+    return jsonify({
+        "packet": encrypted_packet,
+        "verification_success": is_valid,
+        "decrypted_payload": decrypted_data
     })
 
 

@@ -112,6 +112,35 @@ def run_security_audit():
     print("=" * 70)
 
 
+def run_robotics_sim():
+    """Executes EKF navigation simulation steps and PQC Tunnel verification."""
+    from nizam.robotics import RobotKinematicsEngine
+    from nizam.pqc_tunnel import PQCHybridTunnel
+    
+    print("=" * 70)
+    print("        NİZAM-AI OTONOM ROBOTİK EKF SEYRÜSEFER VE PQC TÜNELİ")
+    print("=" * 70)
+    
+    engine = RobotKinematicsEngine()
+    print("[1] Extended Kalman Filter (EKF) Seyir Simülasyonu (5 Adım Normal, 5 Adım EW Jamming)")
+    
+    for i in range(1, 11):
+        is_jammed = (i > 5)
+        res = engine.step_simulation(gps_jammed=is_jammed)
+        status = "EW JAMMED (INS Only)" if is_jammed else "GPS Normal"
+        print(f" Adım {i:02d} [{status}] | Gerçek: ({res['true_position']['x']}, {res['true_position']['y']}) | EKF: ({res['ekf_estimated']['x']}, {res['ekf_estimated']['y']}) | EKF Hata: {res['ekf_error_m']}m")
+        
+    print("\n[2] PQC Kyber-1024 / Dilithium-5 Hibrit Tünel Testi")
+    tunnel = PQCHybridTunnel("Aselsan-UAV-1", "Roketsan-Base")
+    payload = {"telemetry": "TACTICAL_DRONE_POS", "coordinates": [40.1, 32.8]}
+    pkt = tunnel.encrypt_packet(payload)
+    is_valid, dec = tunnel.decrypt_packet(pkt)
+    print(f" - Şifreli Paket Boyutu: {len(pkt['ciphertext'])} chars")
+    print(f" - PQC KEM: {pkt['kem']} | PQC İmza: {pkt['sig']}")
+    print(f" - Doğrulama Durumu: {'BAŞARILI' if is_valid else 'BAŞARISIZ'}")
+    print("=" * 70)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Nizam-AI Yönetim Arayüzü")
     group = parser.add_mutually_exclusive_group(required=True)
@@ -119,6 +148,7 @@ def main():
     group.add_argument("--dashboard", action="store_true", help="Flask tabanlı web panelini başlatır.")
     group.add_argument("--benchmark", action="store_true", help="Edge AI optimizasyon testlerini çalıştırır.")
     group.add_argument("--security", action="store_true", help="Siber güvenlik ve yerel SQLite denetim raporunu gösterir.")
+    group.add_argument("--robotics", action="store_true", help="Otonom robotik EKF seyrüsefer ve PQC tünel testini çalıştırır.")
     
     args = parser.parse_args()
     
@@ -130,6 +160,8 @@ def main():
         run_benchmarks()
     elif args.security:
         run_security_audit()
+    elif args.robotics:
+        run_robotics_sim()
 
 if __name__ == "__main__":
     main()

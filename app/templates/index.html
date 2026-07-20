@@ -47,6 +47,9 @@
                 <button class="nav-btn" data-tab="federated">
                     <i class="fa-solid fa-network-wired"></i> Dağıtık Öğrenme
                 </button>
+                <button class="nav-btn" data-tab="security">
+                    <i class="fa-solid fa-shield-halved"></i> Siber Güvenlik & DB
+                </button>
             </nav>
 
             <div class="sidebar-footer">
@@ -401,6 +404,64 @@
                             <div class="post-item empty">
                                 <p>Sosyal ağda henüz paylaşım yok. FL yuvarlağını çalıştırdığınızda buraya otomatik kurumsal bültenler düşecektir.</p>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 6: CYBER SECURITY & DATABASE AUDIT -->
+            <section class="tab-content" id="tab-security">
+                <div class="grid-layout">
+                    <!-- Security metrics -->
+                    <div class="glass-card col-4">
+                        <div class="card-header">
+                            <h3>PQC İmza Doğrulama</h3>
+                            <i class="fa-solid fa-key text-emerald"></i>
+                        </div>
+                        <div class="card-value"><span id="pqc-status">Aktif</span></div>
+                        <div class="card-desc">Dilithium/Kyber simülasyonlu PQC imzalarıyla düğüm ağırlık doğrulaması.</div>
+                    </div>
+
+                    <div class="glass-card col-4">
+                        <div class="card-header">
+                            <h3>Byzantine Defans Modu</h3>
+                            <i class="fa-solid fa-shield-cat text-cyan"></i>
+                        </div>
+                        <div class="card-value"><span id="byzantine-status">L2 Norm</span></div>
+                        <div class="card-desc">Zehirli (poisoned) gradyanları otomatik ayıklayan L2 mesafe filtresi.</div>
+                    </div>
+
+                    <div class="glass-card col-4">
+                        <div class="card-header">
+                            <h3>Yerel SQLite Kayıtları</h3>
+                            <i class="fa-solid fa-database text-violet"></i>
+                        </div>
+                        <div class="card-value"><span id="db-records-count">0</span></div>
+                        <div class="card-desc">Sınır içi cihazda tutulan yerel SQLite veri tabanı toplam log adedi.</div>
+                    </div>
+
+                    <!-- Security Audit Table -->
+                    <div class="glass-card col-12">
+                        <h3>Siber Vatan Olay ve Güvenlik Denetim Günlüğü (Audit Logs)</h3>
+                        <p class="desc">SQLite veri tabanına anlık kaydedilen PQC imza doğrulama, zehirli veri engelleme ve elektronik harp logları.</p>
+                        
+                        <div class="table-container">
+                            <table class="data-table" id="security-audit-table">
+                                <thead>
+                                    <tr>
+                                        <th>Zaman</th>
+                                        <th>Olay Türü</th>
+                                        <th>Düğüm ID</th>
+                                        <th>Durum</th>
+                                        <th>Detaylar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="5" class="text-center">Güvenlik kayıtları yükleniyor...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

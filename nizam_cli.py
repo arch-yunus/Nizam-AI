@@ -88,12 +88,37 @@ def run_benchmarks():
     print("=" * 70)
 
 
+def run_security_audit():
+    """Prints local security audit logs and database metrics."""
+    from nizam.storage import NizamDatabase
+    db = NizamDatabase()
+    summary = db.get_audit_summary()
+    logs = db.get_recent_security_logs(limit=10)
+    
+    print("=" * 70)
+    print("                 NİZAM-AI SİBER GÜVENLİK VE DB DENETİMİ")
+    print("=" * 70)
+    print(f" - Veri Tabanı Konumu: {summary['db_path']}")
+    print(f" - Toplam Telemetri Kaydı: {summary['telemetry_records']}")
+    print(f" - Toplam FL Yuvarlak Kaydı: {summary['federated_rounds']}")
+    print(f" - Toplam Sağlık Tanı Kaydı: {summary['health_diagnoses']}")
+    print(f" - Toplam Siber Güvenlik Olayı: {summary['security_events']}")
+    print("\n[Son Siber Güvenlik Denetim Logları]")
+    if not logs:
+        print(" - Henüz kayıtlı güvenlik olayı bulunmamaktadır.")
+    else:
+        for log in logs:
+            print(f" [{log['timestamp']}] [{log['event_type']}] Node: {log['node_id']} | Status: {log['status']} | {log['details']}")
+    print("=" * 70)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Nizam-AI Yönetim Arayüzü")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--test", action="store_true", help="Birim testleri çalıştırır.")
     group.add_argument("--dashboard", action="store_true", help="Flask tabanlı web panelini başlatır.")
     group.add_argument("--benchmark", action="store_true", help="Edge AI optimizasyon testlerini çalıştırır.")
+    group.add_argument("--security", action="store_true", help="Siber güvenlik ve yerel SQLite denetim raporunu gösterir.")
     
     args = parser.parse_args()
     
@@ -103,6 +128,8 @@ def main():
         run_dashboard()
     elif args.benchmark:
         run_benchmarks()
+    elif args.security:
+        run_security_audit()
 
 if __name__ == "__main__":
     main()

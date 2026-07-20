@@ -144,5 +144,36 @@ class TestNizamAI(unittest.TestCase):
         self.assertTrue(telemetry["quantum_mapping_applied"])
         self.assertEqual(len(telemetry["quantum_feature_state"]), 4)
 
+    def test_storage_and_security(self):
+        from nizam.security import SovereignNodeSigner, ByzantineRobustFilter
+        from nizam.storage import NizamDatabase
+        
+        # Test PQC Signer
+        signer = SovereignNodeSigner("Node-Test")
+        w = np.ones((2, 2), dtype=np.float32)
+        b = np.zeros(2, dtype=np.float32)
+        sig = signer.sign_payload(w, b)
+        self.assertTrue(signer.verify_signature(w, b, sig))
+        
+        # Test tampering
+        w_tampered = w * 2.0
+        self.assertFalse(signer.verify_signature(w_tampered, b, sig))
+
+        # Test Byzantine Filter
+        b_filter = ByzantineRobustFilter()
+        node_ids = ["Node1", "Node2", "Node3", "NodeMalicious"]
+        weights = [np.ones((2,2))*0.1, np.ones((2,2))*0.11, np.ones((2,2))*0.09, np.ones((2,2))*100.0]
+        biases = [np.zeros(2), np.zeros(2), np.zeros(2), np.ones(2)*50.0]
+        valid_ids, valid_w, valid_b, rejected_ids = b_filter.filter_updates(node_ids, weights, biases)
+        self.assertIn("NodeMalicious", rejected_ids)
+        self.assertNotIn("NodeMalicious", valid_ids)
+
+        # Test Storage DB
+        db = NizamDatabase(":memory:") # In-memory database for testing
+        db.log_security_event("TEST_EVENT", "Node-Test", "SUCCESS", "Security test pass.")
+        logs = db.get_recent_security_logs(limit=5)
+        self.assertEqual(len(logs), 1)
+        self.assertEqual(logs[0]["event_type"], "TEST_EVENT")
+
 if __name__ == '__main__':
     unittest.main()

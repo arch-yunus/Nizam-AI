@@ -134,6 +134,7 @@ graph TD
 * [x] C++ çekirdek mantık motorunun yazılması.
 * [x] Python orkestrasyon katmanının ve ctypes bağlantılarının kurulması.
 * [x] Kuantum Özellik Haritalama (Quantum Feature Map) modülünün Qiskit entegrasyonuyla yazılması.
+* [x] Siber Güvenlik (PQC İmza Doğrulama, Byzantine Defansı) ve yerel SQLite veri tabanı motorunun (`nizam/storage.py`) yazılması.
 * [x] Otonom İHA sürü simülasyonu, onkoloji tarayıcı ve eğitim asistanı pilotlarının kodlanması.
 * [x] Flask tabanlı etkileşimli, neon-cam (glassmorphic) tasarımlı web dashboard'unun entegrasyonu.
 * [x] Birim testleri (`tests_nizam/`) ve edge benchmark altyapısının kurulması.
@@ -183,7 +184,12 @@ Tüm işlemleri tek bir komut satırı arayüzünden (CLI) yönetebilirsiniz:
    ```bash
    python nizam_cli.py --dashboard
    ```
-   Web arayüzü başlatıldıktan sonra tarayıcınızda **http://127.0.0.1:5000** adresine giderek sürü İHA simülasyonunu, dağıtık öğrenme yuvarlaklarını, Küre ansiklopedisini ve T3AI entegrasyonlarını test edebilirsiniz.
+   Web arayüzü başlatıldıktan sonra tarayıcınızda **http://127.0.0.1:5000** adresine giderek sürü İHA simülasyonunu, dağıtık öğrenme yuvarlaklarını, Küre ansiklopedisini, T3AI entegrasyonlarını ve Siber Güvenlik denetim tablosunu test edebilirsiniz.
+
+4. **Siber Güvenlik ve Yerel Veri Tabanı Raporu:**
+   ```bash
+   python nizam_cli.py --security
+   ```
 
 ### 🔨 C++ Çekirdek Derleme Kılavuzu
 

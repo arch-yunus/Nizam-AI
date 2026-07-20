@@ -12,6 +12,7 @@ from nizam.pilots.defense import UAVSwarmTacticalSimulator
 from nizam.pilots.health import EdgeDiagnosticsAssistant, SmartDrugDiscoverySimulator
 from nizam.pilots.education import PersonalizedLearningAssistant
 from nizam.integrations import KureClient, T3AIClient, EnSosyalClient
+from nizam.storage import NizamDatabase
 
 app = Flask(__name__)
 
@@ -21,6 +22,7 @@ swarm_sim = UAVSwarmTacticalSimulator(num_drones=6)
 health_diag = EdgeDiagnosticsAssistant()
 drug_discovery = SmartDrugDiscoverySimulator()
 learning_assistant = PersonalizedLearningAssistant()
+db = NizamDatabase()
 
 kure_client = KureClient()
 t3ai_client = T3AIClient()
@@ -28,7 +30,6 @@ ensosyal_client = EnSosyalClient()
 
 # Federated learning setup
 fed_server = NizamFederatedServer(num_features=4, num_classes=3)
-# Register a few simulated nodes representing local institutions
 nodes_data = {
     "Tubitak-Node": (np.random.randn(20, 4), np.random.randint(0, 3, 20)),
     "Aselsan-Node": (np.random.randn(15, 4), np.random.randint(0, 3, 15)),
@@ -49,6 +50,12 @@ def index():
 @app.route('/api/telemetry', methods=['GET'])
 def get_telemetry():
     telemetry = edge_sim.get_system_telemetry()
+    db.log_telemetry(
+        cpu=telemetry["cpu_percent"],
+        ram=telemetry["real_process_ram_mb"],
+        battery_hours=telemetry["runtime_nizam_hours"],
+        power_w=telemetry["nizam_edge_simulated_power_w"]
+    )
     return jsonify(telemetry)
 
 
@@ -61,6 +68,7 @@ def swarm_step():
 @app.route('/api/swarm/toggle-jamming', methods=['POST'])
 def toggle_jamming():
     state = swarm_sim.toggle_jamming()
+    db.log_security_event("ELECTRONIC_WARFARE_TOGGLE", "Swarm-Simulator", "WARNING" if state else "NORMAL", f"Jamming state toggled to {state}")
     return jsonify({"jamming_active": state})
 
 
@@ -68,7 +76,6 @@ def toggle_jamming():
 def federated_step():
     res = fed_server.run_federated_round(local_epochs=2, learning_rate=0.05)
     
-    # Push update to En Sosyal if progress is made
     round_no = request.json.get('round', 1)
     if round_no % 3 == 0:
         ensosyal_client.publish_post(
@@ -80,6 +87,7 @@ def federated_step():
     return jsonify({
         "status": res["round_status"],
         "nodes": res["active_nodes"],
+        "rejected_byzantine_nodes": res.get("rejected_byzantine_nodes", []),
         "samples": res["total_samples_processed"],
         "weights_norm": round(res["global_weights_norm"], 4),
         "privacy": res["privacy_metric"],
@@ -96,6 +104,7 @@ def diagnose():
     mitotic = float(data.get('mitotic', 0.2))
     
     res = health_diag.diagnose_cell(area, perimeter, texture, mitotic)
+    db.log_health_diagnosis(area, perimeter, texture, mitotic, res["diagnosis"], res["confidence"])
     return jsonify(res)
 
 
@@ -132,6 +141,15 @@ def t3ai_chat():
     return jsonify(res)
 
 
+@app.route('/api/security/audit', methods=['GET'])
+def security_audit():
+    logs = db.get_recent_security_logs(limit=15)
+    summary = db.get_audit_summary()
+    return jsonify({
+        "audit_logs": logs,
+        "summary": summary
+    })
+
+
 if __name__ == '__main__':
-    # Run the local Flask server on port 5000
     app.run(debug=True, host='127.0.0.1', port=5000)

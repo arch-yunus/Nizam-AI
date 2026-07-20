@@ -10,7 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
         'swarm': { title: 'Sürü Harp Simülatörü', subtitle: 'Yerel Edge AI Kararları ile Otonom Sürü İletişimi' },
         'health': { title: 'Sağlık ve Tanı', subtitle: 'Onkolojik Tarama ve Akıllı İlaç Keşfi Edge Analizi' },
         'education': { title: 'Kişiselleştirilmiş Eğitim', subtitle: 'Yerel Metriklerle Müfredat Adaptasyonu ve T3AI Entegrasyonu' },
-        'federated': { title: 'Dağıtık Öğrenme Konsolu', subtitle: 'Privacy-Preserving Ağırlık Birleştirme (FedAvg) Yönetimi' }
+        'federated': { title: 'Dağıtık Öğrenme Konsolu', subtitle: 'Privacy-Preserving Ağırlık Birleştirme (FedAvg) Yönetimi' },
+        'security': { title: 'Siber Güvenlik & Veri Tabanı', subtitle: 'PQC İmza Doğrulama, Byzantine Defansı ve Yerel SQLite Denetimi' }
     };
 
     navButtons.forEach(btn => {
@@ -31,6 +32,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 startSwarmSim();
             } else {
                 stopSwarmSim();
+            }
+
+            if (tabName === 'security') {
+                fetchSecurityAudit();
             }
         });
     });
@@ -477,5 +482,39 @@ document.addEventListener('DOMContentLoaded', () => {
             kureModal.classList.add('hide');
         }
     });
+
+
+    // --- SECURITY AUDIT & DATABASE LOGS ---
+    function fetchSecurityAudit() {
+        fetch('/api/security/audit')
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.querySelector('#security-audit-table tbody');
+                tbody.innerHTML = '';
+                
+                const totalRecords = (data.summary.telemetry_records + data.summary.federated_rounds + data.summary.health_diagnoses + data.summary.security_events);
+                document.getElementById('db-records-count').textContent = totalRecords.toLocaleString();
+                
+                if (!data.audit_logs || data.audit_logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Henüz olay kaydı yok.</td></tr>';
+                    return;
+                }
+
+                data.audit_logs.forEach(log => {
+                    const row = document.createElement('tr');
+                    const statusClass = log.status === 'SUCCESS' || log.status === 'NORMAL' ? 'high' : log.status === 'REJECTED' ? 'low' : 'medium';
+                    
+                    row.innerHTML = `
+                        <td>${log.timestamp}</td>
+                        <td><strong>${log.event_type}</strong></td>
+                        <td>${log.node_id}</td>
+                        <td><span class="badge-pill ${statusClass}">${log.status}</span></td>
+                        <td>${log.details}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(err => console.error("Security audit fetch error:", err));
+    }
 
 });

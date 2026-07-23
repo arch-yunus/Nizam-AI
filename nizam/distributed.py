@@ -93,6 +93,10 @@ class NizamFederatedServer:
         node.set_weights(self.global_weights, self.global_biases)
         self.db.log_security_event("NODE_REGISTER", node.node_id, "SUCCESS", "PQC keypair validated and registered.")
 
+    def set_byzantine_filter_type(self, filter_type: str):
+        self.byzantine_filter.filter_type = filter_type.upper()
+        self.db.log_security_event("BYZANTINE_FILTER_CONFIG", "Server", "SUCCESS", f"Byzantine filter type set to {filter_type.upper()}.")
+
     def run_federated_round(self, local_epochs: int = 2, learning_rate: float = 0.05) -> Dict:
         """
         Executes a full federated learning round:

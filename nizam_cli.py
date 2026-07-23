@@ -16,7 +16,7 @@ import numpy as np
 # Ensure workspace root is in path
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from nizam.core_wrapper import quantize_int8, dequantize_int8, py_quantize_int8, py_dequantize_int8
+from nizam.core_wrapper import quantize_int8, dequantize_int8, py_quantize_int8, py_dequantize_int8, quantize_int4, py_quantize_int4
 from nizam.hybrid import HybridAIModel
 
 def run_tests():
@@ -40,6 +40,9 @@ def run_dashboard():
 
 def run_benchmarks():
     """Runs Edge AI performance benchmarks."""
+    from nizam.edge import EdgeDeviceSimulator
+    edge_sim = EdgeDeviceSimulator()
+
     print("=" * 70)
     print("                 NİZAM-AI EDGE BENCHMARK ANALİZİ")
     print("=" * 70)
@@ -51,40 +54,55 @@ def run_benchmarks():
     
     float32_size = num_params * 4 / (1024 * 1024) # 4 bytes each, in MB
     int8_size = num_params * 1 / (1024 * 1024) # 1 byte each, in MB
+    int4_size = num_params * 0.5 / (1024 * 1024) # 0.5 bytes each, in MB
     
     print(f" - Float32 Bellek Boyutu: {float32_size:.2f} MB")
-    print(f" - Int8 Nicemlenmiş Boyut: {int8_size:.2f} MB")
-    print(f" - Kazanılan Bellek Alanı: %{((float32_size - int8_size) / float32_size * 100):.1f} (Tasarruf)")
+    print(f" - Int8 Nicemlenmiş Boyut: {int8_size:.2f} MB  (Tasarruf: %75.0)")
+    print(f" - Int4 Nicemlenmiş Boyut: {int4_size:.2f} MB  (Tasarruf: %87.5)")
     
     print("\n[2] Hız Performansı Karşılaştırması (10,000 eleman, 1,000 tekrar)")
     data = np.random.randn(10000).astype(np.float32)
     
-    # Measure Python quantization function
-    start_py = time.perf_counter()
+    # Measure Python quantization function (INT8)
+    start_py8 = time.perf_counter()
     for _ in range(1000):
         _ = py_quantize_int8(data, 0.02, 10)
-    end_py = time.perf_counter()
-    py_dur = (end_py - start_py) * 1000 # in ms
-    print(f" - Saf Python Nicemleme Süresi: {py_dur:.2f} ms")
+    end_py8 = time.perf_counter()
+    py8_dur = (end_py8 - start_py8) * 1000 # in ms
+    print(f" - Saf Python INT8 Nicemleme Süresi: {py8_dur:.2f} ms")
+
+    # Measure Python quantization function (INT4)
+    start_py4 = time.perf_counter()
+    for _ in range(1000):
+        _ = py_quantize_int4(data, 0.02, 10)
+    end_py4 = time.perf_counter()
+    py4_dur = (end_py4 - start_py4) * 1000 # in ms
+    print(f" - Saf Python INT4 Nicemleme Süresi: {py4_dur:.2f} ms")
 
     # Measure C++ ctypes if loaded, or simulate it
-    from nizam.core_wrapper import HAS_CPP_CORE
+    from nizam.core_wrapper import HAS_CPP_CORE, quantize_int4
     if HAS_CPP_CORE:
         start_cpp = time.perf_counter()
         for _ in range(1000):
             _ = quantize_int8(data.tolist(), 0.02, 10)
         end_cpp = time.perf_counter()
         cpp_dur = (end_cpp - start_cpp) * 1000
-        print(f" - C++ Çekirdek Nicemleme Süresi: {cpp_dur:.2f} ms")
-        print(f" - C++ Hızlanma Çarpanı: {(py_dur / max(1e-5, cpp_dur)):.2f}x")
+        print(f" - C++ Çekirdek INT8 Nicemleme Süresi: {cpp_dur:.2f} ms")
+        print(f" - C++ Hızlanma Çarpanı (INT8): {(py8_dur / max(1e-5, cpp_dur)):.2f}x")
     else:
         print(" - C++ Çekirdeği derlenmemiş (Python Fallback devrede).")
         print(" - C++ Derleme adımları için README.md belgesini inceleyin.")
         
-    print("\n[3] Enerji Ayak İzi Karşılaştırması (Uç Cihaz Tüketimi)")
-    print(" - Nizam-AI Edge Mimari Güç Tüketimi: 20 Watt (Sensör seviyesinde anlık karar)")
-    print(" - Geleneksel Bulut GPU Sunucu Tüketimi: 300 Watt (Gecikmeli ağ aktarımı dahil)")
-    print(f" - Enerji Tasarruf Katsayısı: {(300.0 / 20.0):.1f}x")
+    print("\n[3] Donanım Hedef Profili Simülasyonu (1 Milyon Parametre)")
+    for hw_name in ["ARM Cortex-M4/M7", "RISC-V Vector", "Raspberry Pi 5", "NVIDIA Jetson Orin Nano", "Default Server"]:
+        profile_fp32 = edge_sim.profile_inference(num_params, target_hardware=hw_name, quantization_mode="FP32")
+        profile_int8 = edge_sim.profile_inference(num_params, target_hardware=hw_name, quantization_mode="INT8")
+        profile_int4 = edge_sim.profile_inference(num_params, target_hardware=hw_name, quantization_mode="INT4")
+        
+        print(f" - {hw_name:30s} | Güç: {profile_fp32['power_w']:6.2f}W")
+        print(f"    * FP32 -> Gecikme: {profile_fp32['latency_ms']:8.2f}ms | Bellek: {profile_fp32['memory_mb']:8.2f}MB | Enerji: {profile_fp32['energy_joules']:.6f}J")
+        print(f"    * INT8 -> Gecikme: {profile_int8['latency_ms']:8.2f}ms | Bellek: {profile_int8['memory_mb']:8.2f}MB | Enerji: {profile_int8['energy_joules']:.6f}J")
+        print(f"    * INT4 -> Gecikme: {profile_int4['latency_ms']:8.2f}ms | Bellek: {profile_int4['memory_mb']:8.2f}MB | Enerji: {profile_int4['energy_joules']:.6f}J")
     print("=" * 70)
 
 

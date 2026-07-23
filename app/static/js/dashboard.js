@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
         'robotics': { title: 'Otonom Robotik & EKF Seyrüsefer', subtitle: 'Extended Kalman Filter ile Gürültülü Sensör Kestirimi ve PQC Tünelleme' }
     };
 
+    let roboticsInterval = null;
+
     navButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const tabName = btn.getAttribute('data-tab');
@@ -41,13 +43,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (tabName === 'robotics') {
                 fetchRoboticsStep();
+                if (!roboticsInterval) {
+                    roboticsInterval = setInterval(fetchRoboticsStep, 1000);
+                }
+            } else {
+                if (roboticsInterval) {
+                    clearInterval(roboticsInterval);
+                    roboticsInterval = null;
+                }
             }
         });
     });
 
-    // --- SYSTEM TELEMETRY POLLING ---
+    // --- SYSTEM TELEMETRY POLLING & PROFILING ---
+    const hwSelect = document.getElementById('hw-target-select');
+    const quantSelect = document.getElementById('quant-mode-select');
+    const paramInput = document.getElementById('param-size-input');
+
     function fetchTelemetry() {
-        fetch('/api/telemetry')
+        const hw = hwSelect ? hwSelect.value : 'Generic Mobile';
+        const quant = quantSelect ? quantSelect.value : 'FP32';
+        fetch(`/api/telemetry?hardware_target=${encodeURIComponent(hw)}&quantization_mode=${encodeURIComponent(quant)}`)
             .then(res => res.json())
             .then(data => {
                 document.getElementById('real-ram').textContent = data.real_process_ram_mb;
@@ -63,9 +79,30 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .catch(err => console.error("Telemetry fetch error:", err));
     }
+
+    function updateHardwareProfileStats() {
+        const hw = hwSelect ? hwSelect.value : 'Generic Mobile';
+        const quant = quantSelect ? quantSelect.value : 'FP32';
+        const params = paramInput ? paramInput.value : 1000000;
+        
+        fetch(`/api/telemetry/profile?hardware_target=${encodeURIComponent(hw)}&quantization_mode=${encodeURIComponent(quant)}&params=${params}`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('prof-latency').textContent = data.latency_ms + ' ms';
+                document.getElementById('prof-memory').textContent = data.memory_mb + ' MB';
+                document.getElementById('prof-power').textContent = data.power_w + ' W';
+                document.getElementById('prof-energy').textContent = data.energy_joules + ' J';
+            })
+            .catch(err => console.error("Profile stats fetch error:", err));
+    }
     
-    // Poll telemetry every 3 seconds
+    if (hwSelect) hwSelect.addEventListener('change', () => { updateHardwareProfileStats(); fetchTelemetry(); });
+    if (quantSelect) quantSelect.addEventListener('change', () => { updateHardwareProfileStats(); fetchTelemetry(); });
+    if (paramInput) paramInput.addEventListener('input', updateHardwareProfileStats);
+
+    // Initial run
     fetchTelemetry();
+    updateHardwareProfileStats();
     setInterval(fetchTelemetry, 3000);
 
 
@@ -377,6 +414,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- FEDERATED LEARNING ROUNDS ---
+    // --- FEDERATED LEARNING ROUNDS & BYZANTINE CONFIG ---
+    const byzantineModeSelect = document.getElementById('fl-byzantine-mode');
+    if (byzantineModeSelect) {
+        byzantineModeSelect.addEventListener('change', () => {
+            const filterType = byzantineModeSelect.value;
+            fetch('/api/federated/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filter_type: filterType })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const secStatus = document.getElementById('byzantine-status');
+                if (secStatus) secStatus.textContent = filterType.toUpperCase();
+                fetchSecurityAudit();
+            })
+            .catch(err => console.error("Byzantine config error:", err));
+        });
+    }
+
     const flRoundBtn = document.getElementById('fl-round-btn');
     const flRoundCount = document.getElementById('fl-round-count');
     const flWeightNorm = document.getElementById('fl-weight-norm');
@@ -529,7 +586,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.json())
             .then(data => {
                 document.getElementById('ekf-error-val').textContent = data.ekf_error_m;
-                document.getElementById('gps-error-val').textContent = data.gps_jammed ? 'Sinyal Yok (EW)' : data.raw_gps_error_m;
+                document.getElementById('gps-error-val').textContent = data.gps_jammed ? 'Sinyal Yok (EW)' : (data.gps_spoofed ? 'Sahte GPS (Saldırı)' : data.raw_gps_error_m);
                 document.getElementById('ekf-uncertainty-val').textContent = data.uncertainty_m;
                 
                 document.getElementById('robot-true-pos').textContent = `X: ${data.true_position.x}, Y: ${data.true_position.y}`;
@@ -539,9 +596,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.gps_jammed) {
                     statusEl.textContent = 'GPS Kesintisi (Ölü Seyir - INS Modu)';
                     statusEl.className = 'text-amber';
+                } else if (data.gps_spoofed) {
+                    statusEl.textContent = 'GPS Sinyali Var (Saldırı Altında)';
+                    statusEl.className = 'text-rose';
                 } else {
                     statusEl.textContent = 'Aktif (Sinyal Güçlü & EKF Güncelleniyor)';
                     statusEl.className = 'text-cyan';
+                }
+
+                const antiSpoofEl = document.getElementById('robot-anti-spoof-status');
+                if (antiSpoofEl) {
+                    if (data.spoofing_detected) {
+                        antiSpoofEl.textContent = 'SALDIRI ENGELLENDİ! (Konum Doğrulanamadı)';
+                        antiSpoofEl.className = 'text-rose';
+                    } else {
+                        antiSpoofEl.textContent = 'Doğrulandı (Güvenli)';
+                        antiSpoofEl.className = 'text-emerald';
+                    }
                 }
             })
             .catch(err => console.error("Robotics step error:", err));
@@ -563,6 +634,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     fetchRoboticsStep();
                 })
                 .catch(err => console.error("Toggle GPS error:", err));
+        });
+    }
+
+    const toggleRoboticsSpoofBtn = document.getElementById('toggle-robotics-spoofing-btn');
+    if (toggleRoboticsSpoofBtn) {
+        toggleRoboticsSpoofBtn.addEventListener('click', () => {
+            fetch('/api/robotics/toggle-gps-spoofing', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.gps_spoofed) {
+                        toggleRoboticsSpoofBtn.classList.add('active');
+                        toggleRoboticsSpoofBtn.innerHTML = '<i class="fa-solid fa-satellite"></i> GPS Spoofing Saldırısını Kapat';
+                    } else {
+                        toggleRoboticsSpoofBtn.classList.remove('active');
+                        toggleRoboticsSpoofBtn.innerHTML = '<i class="fa-solid fa-satellite"></i> GPS Spoofing Saldırısı Yap';
+                    }
+                    fetchRoboticsStep();
+                })
+                .catch(err => console.error("Toggle GPS spoofing error:", err));
         });
     }
 

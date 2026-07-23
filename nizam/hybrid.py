@@ -1,5 +1,5 @@
 import numpy as np
-from nizam.core_wrapper import evaluate_symbolic_clause, quantize_int8, dequantize_int8
+from nizam.core_wrapper import evaluate_symbolic_clause, quantize_int8, dequantize_int8, quantize_int4, dequantize_int4
 
 class HybridAIModel:
     """
@@ -108,6 +108,16 @@ class HybridAIModel:
         flat_weights = self.weights.flatten().tolist()
         quantized_flat = quantize_int8(flat_weights, scale, zero_point)
         dequantized_flat = dequantize_int8(quantized_flat.tolist(), scale, zero_point)
+        self.weights = dequantized_flat.reshape(self.weights.shape)
+        return len(flat_weights)  # Return number of quantized params
+
+    def quantize_model_int4(self, scale=0.01, zero_point=0):
+        """
+        Quantizes weights to 4-bit to simulate running on resource-constrained Edge hardware.
+        """
+        flat_weights = self.weights.flatten().tolist()
+        quantized_flat = quantize_int4(flat_weights, scale, zero_point)
+        dequantized_flat = dequantize_int4(quantized_flat.tolist(), scale, zero_point)
         self.weights = dequantized_flat.reshape(self.weights.shape)
         return len(flat_weights)  # Return number of quantized params
 

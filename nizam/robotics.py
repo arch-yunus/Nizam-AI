@@ -59,9 +59,11 @@ class ExtendedKalmanFilter:
         # Predict Covariance
         self.P = np.dot(np.dot(self.F, self.P), self.F.T) + self.Q
 
-    def update(self, gps_x: float, gps_y: float):
+    def update(self, gps_x: float, gps_y: float) -> Tuple[bool, bool]:
         """
         Update step using GPS measurement z = [gps_x, gps_y]^T
+        Includes Anti-Spoofing Chi-squared validation based on Mahalanobis distance.
+        Returns (is_accepted, spoofing_detected)
         """
         z = np.array([[gps_x], [gps_y]], dtype=np.float64)
         
@@ -71,8 +73,20 @@ class ExtendedKalmanFilter:
         # Innovation Covariance S = H * P * H^T + R
         S = np.dot(np.dot(self.H, self.P), self.H.T) + self.R
         
+        # Chi-squared Spoofing detection (Mahalanobis distance)
+        try:
+            S_inv = np.linalg.inv(S)
+            d2 = np.dot(np.dot(y.T, S_inv), y)[0, 0]
+        except np.linalg.LinAlgError:
+            d2 = 999.0  # Force rejection if covariance is singular
+            
+        # 9.21 is the 99% confidence threshold for chi-squared distribution with 2 degrees of freedom
+        if d2 > 9.21:
+            # GPS data is anomalous, flag as spoofed and reject update
+            return False, True
+        
         # Kalman Gain K = P * H^T * S^-1
-        K = np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))
+        K = np.dot(np.dot(self.P, self.H.T), S_inv)
         
         # Updated State Estimate
         self.x = self.x + np.dot(K, y)
@@ -80,6 +94,8 @@ class ExtendedKalmanFilter:
         # Updated Covariance P = (I - K * H) * P
         I = np.eye(4, dtype=np.float64)
         self.P = np.dot((I - np.dot(K, self.H)), self.P)
+        
+        return True, False
 
     def get_state(self) -> Dict[str, float]:
         return {
@@ -94,8 +110,8 @@ class ExtendedKalmanFilter:
 
 class RobotKinematicsEngine:
     """
-    Simulates a physical robot / UAV trajectory under noisy sensors and GPS outages.
-    Demonstrates Edge EKF navigation under Electronic Warfare (EW).
+    Simulates a physical robot / UAV trajectory under noisy sensors, GPS outages, and GPS spoofing.
+    Demonstrates Edge EKF navigation under Electronic Warfare (EW) and cyber spoofing.
     """
     def __init__(self):
         self.ekf = ExtendedKalmanFilter(dt=0.1)
@@ -104,13 +120,14 @@ class RobotKinematicsEngine:
         self.true_vx = 5.0
         self.true_vy = 3.0
         self.step_count = 0
+        self.spoofing_alert_active = False
 
-    def step_simulation(self, gps_jammed: bool = False) -> Dict[str, Any]:
+    def step_simulation(self, gps_jammed: bool = False, gps_spoofed: bool = False) -> Dict[str, Any]:
         self.step_count += 1
         
-        # True physics motion
-        ax = math.sin(self.step_count * 0.1) * 0.5
-        ay = math.cos(self.step_count * 0.1) * 0.5
+        # True physics motion with simulated IMU noise and drift
+        ax = math.sin(self.step_count * 0.1) * 0.5 + np.random.normal(0, 0.02)
+        ay = math.cos(self.step_count * 0.1) * 0.5 + np.random.normal(0, 0.02)
         
         self.true_vx += ax * 0.1
         self.true_vy += ay * 0.1
@@ -120,17 +137,30 @@ class RobotKinematicsEngine:
         # Predict with IMU acceleration
         self.ekf.predict(ax, ay)
         
-        # Measure
+        # Measure with GPS noise
         noisy_gps_x = self.true_x + np.random.normal(0, 1.5)
         noisy_gps_y = self.true_y + np.random.normal(0, 1.5)
         
+        # If spoofed, override GPS with malicious offset
+        if gps_spoofed:
+            noisy_gps_x += 45.0
+            noisy_gps_y += 45.0
+        
+        is_accepted = False
+        spoofing_detected = False
+        
         if not gps_jammed:
-            self.ekf.update(noisy_gps_x, noisy_gps_y)
-
+            is_accepted, spoofing_detected = self.ekf.update(noisy_gps_x, noisy_gps_y)
+        
+        self.spoofing_alert_active = spoofing_detected
         state = self.ekf.get_state()
         
         # Calculate positioning error
-        raw_gps_error = math.hypot(noisy_gps_x - self.true_x, noisy_gps_y - self.true_y) if not gps_jammed else 999.0
+        if gps_jammed:
+            raw_gps_error = 999.0
+        else:
+            raw_gps_error = math.hypot(noisy_gps_x - self.true_x, noisy_gps_y - self.true_y)
+            
         ekf_error = math.hypot(state["x"] - self.true_x, state["y"] - self.true_y)
         
         return {
@@ -139,6 +169,9 @@ class RobotKinematicsEngine:
             "noisy_gps": {"x": round(noisy_gps_x, 2), "y": round(noisy_gps_y, 2)} if not gps_jammed else None,
             "ekf_estimated": {"x": round(state["x"], 2), "y": round(state["y"], 2)},
             "gps_jammed": gps_jammed,
+            "gps_spoofed": gps_spoofed,
+            "gps_accepted": is_accepted,
+            "spoofing_detected": spoofing_detected,
             "raw_gps_error_m": round(raw_gps_error, 2),
             "ekf_error_m": round(ekf_error, 2),
             "uncertainty_m": round((state["uncertainty_x"] + state["uncertainty_y"]) / 2.0, 2)

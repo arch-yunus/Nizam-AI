@@ -197,9 +197,61 @@ class TestNizamAI(unittest.TestCase):
         tunnel = PQCHybridTunnel("Node-A", "Node-B")
         payload = {"cmd": "TAKTIK_ROTA", "val": 100}
         pkt = tunnel.encrypt_packet(payload)
-        is_authentic, dec_payload = tunnel.decrypt_packet(pkt)
-        self.assertTrue(is_authentic)
+        is_valid, dec_payload = tunnel.decrypt_packet(pkt)
+        self.assertTrue(is_valid)
         self.assertEqual(dec_payload["cmd"], "TAKTIK_ROTA")
+
+    def test_quantization_int4(self):
+        from nizam.core_wrapper import quantize_int4, dequantize_int4
+        float_values = [-2.0, -1.0, 0.0, 1.0, 2.0]
+        scale = 0.3
+        zero_point = 2
+        
+        quantized = quantize_int4(float_values, scale, zero_point)
+        self.assertEqual(len(quantized), 5)
+        
+        # Test back-and-forth dequantization
+        dequantized = dequantize_int4(quantized, scale, zero_point)
+        for original, restored in zip(float_values, dequantized):
+            self.assertLess(abs(original - restored), scale * 2.0)
+
+    def test_byzantine_krum_and_trimmed_mean(self):
+        from nizam.security import ByzantineRobustFilter
+        
+        # Test Trimmed Mean
+        b_filter_tm = ByzantineRobustFilter(filter_type="TRIMMED_MEAN", mad_threshold=2.5)
+        node_ids = ["Node1", "Node2", "Node3", "NodeMalicious"]
+        weights = [np.ones((2,2))*0.1, np.ones((2,2))*0.11, np.ones((2,2))*0.09, np.ones((2,2))*100.0]
+        biases = [np.zeros(2), np.zeros(2), np.zeros(2), np.ones(2)*50.0]
+        
+        valid_ids, valid_w, valid_b, rejected_ids = b_filter_tm.filter_updates(node_ids, weights, biases)
+        self.assertIn("NodeMalicious", rejected_ids)
+        self.assertNotIn("NodeMalicious", valid_ids)
+
+        # Test Krum
+        b_filter_krum = ByzantineRobustFilter(filter_type="KRUM", f=1)
+        valid_ids_k, valid_w_k, valid_b_k, rejected_ids_k = b_filter_krum.filter_updates(node_ids, weights, biases)
+        self.assertEqual(len(valid_ids_k), 1)
+        self.assertNotEqual(valid_ids_k[0], "NodeMalicious")
+        self.assertIn("NodeMalicious", rejected_ids_k)
+
+    def test_anti_spoofing(self):
+        from nizam.robotics import ExtendedKalmanFilter
+        ekf = ExtendedKalmanFilter(dt=0.1)
+        
+        # Set state to (0,0)
+        ekf.x = np.zeros((4, 1), dtype=np.float64)
+        ekf.P = np.eye(4, dtype=np.float64) * 0.1
+        
+        # Normal update
+        is_accepted, spoofing_detected = ekf.update(0.1, -0.1)
+        self.assertTrue(is_accepted)
+        self.assertFalse(spoofing_detected)
+        
+        # Spoofed/Tampered update (huge offset)
+        is_accepted_spoofed, spoofing_detected_spoofed = ekf.update(100.0, 100.0)
+        self.assertFalse(is_accepted_spoofed)
+        self.assertTrue(spoofing_detected_spoofed)
 
 if __name__ == '__main__':
     unittest.main()

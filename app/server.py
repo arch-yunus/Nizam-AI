@@ -33,6 +33,7 @@ ensosyal_client = EnSosyalClient()
 
 # State variables
 robotics_gps_jammed = False
+robotics_gps_spoofed = False
 
 # Federated learning setup
 fed_server = NizamFederatedServer(num_features=4, num_classes=3)
@@ -55,7 +56,9 @@ def index():
 
 @app.route('/api/telemetry', methods=['GET'])
 def get_telemetry():
-    telemetry = edge_sim.get_system_telemetry()
+    hw = request.args.get('hardware_target', 'Generic Mobile')
+    quant = request.args.get('quantization_mode', 'FP32')
+    telemetry = edge_sim.get_system_telemetry(target_hardware=hw, quantization_mode=quant)
     db.log_telemetry(
         cpu=telemetry["cpu_percent"],
         ram=telemetry["real_process_ram_mb"],
@@ -63,6 +66,23 @@ def get_telemetry():
         power_w=telemetry["nizam_edge_simulated_power_w"]
     )
     return jsonify(telemetry)
+
+
+@app.route('/api/telemetry/profile', methods=['GET'])
+def profile_inference():
+    hw = request.args.get('hardware_target', 'Generic Mobile')
+    quant = request.args.get('quantization_mode', 'FP32')
+    params = int(request.args.get('params', 1000000))
+    res = edge_sim.profile_inference(num_params=params, target_hardware=hw, quantization_mode=quant)
+    return jsonify(res)
+
+
+@app.route('/api/federated/config', methods=['POST'])
+def federated_config():
+    data = request.json
+    filter_type = data.get('filter_type', 'MAD')
+    fed_server.set_byzantine_filter_type(filter_type)
+    return jsonify({"status": "success", "filter_type": filter_type.upper()})
 
 
 @app.route('/api/swarm/step', methods=['GET'])
@@ -159,8 +179,8 @@ def security_audit():
 
 @app.route('/api/robotics/step', methods=['GET'])
 def robotics_step():
-    global robotics_gps_jammed
-    res = robotics_engine.step_simulation(gps_jammed=robotics_gps_jammed)
+    global robotics_gps_jammed, robotics_gps_spoofed
+    res = robotics_engine.step_simulation(gps_jammed=robotics_gps_jammed, gps_spoofed=robotics_gps_spoofed)
     return jsonify(res)
 
 
@@ -170,6 +190,14 @@ def toggle_robotics_gps():
     robotics_gps_jammed = not robotics_gps_jammed
     db.log_security_event("ROBOTICS_GPS_JAMMING", "EKF-Nav-Engine", "WARNING" if robotics_gps_jammed else "NORMAL", f"GPS outage state set to {robotics_gps_jammed}")
     return jsonify({"gps_jammed": robotics_gps_jammed})
+
+
+@app.route('/api/robotics/toggle-gps-spoofing', methods=['POST'])
+def toggle_robotics_spoofing():
+    global robotics_gps_spoofed
+    robotics_gps_spoofed = not robotics_gps_spoofed
+    db.log_security_event("ROBOTICS_GPS_SPOOFING", "EKF-Nav-Engine", "WARNING" if robotics_gps_spoofed else "NORMAL", f"GPS spoofing state set to {robotics_gps_spoofed}")
+    return jsonify({"gps_spoofed": robotics_gps_spoofed})
 
 
 @app.route('/api/pqc/test-tunnel', methods=['POST'])

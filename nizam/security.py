@@ -60,44 +60,115 @@ class ByzantineRobustFilter:
     """
     Byzantine-Robust Weight Filter for Federated Learning.
     Detects and filters out malicious/poisoned node weight submissions
-    using robust Median Absolute Deviation (MAD) L2 distance thresholding.
+    using multiple defense modes: MAD (Median Absolute Deviation), TRIMMED_MEAN, or KRUM.
     """
-    def __init__(self, mad_threshold: float = 3.5):
+    def __init__(self, filter_type: str = "MAD", mad_threshold: float = 3.5, f: int = 1):
+        """
+        filter_type: "MAD", "TRIMMED_MEAN", or "KRUM"
+        mad_threshold: threshold for MAD/Trimmed Mean Z-score filtering
+        f: number of tolerated Byzantine nodes for KRUM
+        """
+        self.filter_type = filter_type.upper()
         self.mad_threshold = mad_threshold
+        self.f = f
 
     def filter_updates(self, node_ids: List[str], weights_list: List[np.ndarray], biases_list: List[np.ndarray]) -> Tuple[List[str], List[np.ndarray], List[np.ndarray], List[str]]:
         """
         Inspects node updates and filters out poisoned/anomalous weights.
         Returns (valid_node_ids, valid_weights, valid_biases, rejected_node_ids)
         """
-        if len(weights_list) <= 2:
+        n = len(weights_list)
+        if n <= 2:
             # Not enough nodes to compute reliable statistics, accept all
             return node_ids, weights_list, biases_list, []
 
-        # Flatten weights for norm calculations
-        flat_weights = [w.flatten() for w in weights_list]
+        # Flatten weights and biases for distance calculations
+        flat_updates = []
+        for w, b in zip(weights_list, biases_list):
+            flat_updates.append(np.concatenate([w.flatten(), b.flatten()]))
         
-        # Calculate L2 norm distance from the median weight vector
-        median_weight = np.median(flat_weights, axis=0)
-        distances = np.array([float(np.linalg.norm(w - median_weight)) for w in flat_weights], dtype=np.float32)
-        
-        med_dist = np.median(distances)
-        mad = np.median(np.abs(distances - med_dist))
-        
-        # Standardize using modified z-score (0.6745 * diff / mad)
+        flat_updates = np.array(flat_updates, dtype=np.float32)
+
         valid_ids, valid_w, valid_b, rejected_ids = [], [], [], []
-        
-        for idx, dist in enumerate(distances):
-            if mad > 1e-8:
-                mod_z_score = 0.6745 * abs(dist - med_dist) / mad
-            else:
-                mod_z_score = 0.0 if abs(dist - med_dist) < 1e-5 else 999.0
 
-            if mod_z_score > self.mad_threshold:
-                rejected_ids.append(node_ids[idx])
-            else:
-                valid_ids.append(node_ids[idx])
-                valid_w.append(weights_list[idx])
-                valid_b.append(biases_list[idx])
+        if self.filter_type == "KRUM":
+            # KRUM: Choose a single representative update that minimizes the sum of L2 distances
+            # to its n - f - 2 nearest neighbors.
+            num_neighbors = max(1, n - self.f - 2)
+            scores = []
+            
+            for i in range(n):
+                dists = []
+                for j in range(n):
+                    if i != j:
+                        dists.append(float(np.linalg.norm(flat_updates[i] - flat_updates[j])))
+                dists.sort()
+                # Sum the closest neighbors
+                scores.append(sum(dists[:num_neighbors]))
+                
+            best_idx = int(np.argmin(scores))
+            
+            for idx in range(n):
+                if idx == best_idx:
+                    valid_ids.append(node_ids[idx])
+                    valid_w.append(weights_list[idx])
+                    valid_b.append(biases_list[idx])
+                else:
+                    rejected_ids.append(node_ids[idx])
+                    
+            return valid_ids, valid_w, valid_b, rejected_ids
 
-        return valid_ids, valid_w, valid_b, rejected_ids
+        elif self.filter_type == "TRIMMED_MEAN":
+            # TRIMMED_MEAN: Calculate coordinate-wise trimmed mean, then filter outliers
+            # Trim 10% from both ends (minimum 1 element)
+            trim_pct = 0.1
+            k = max(1, int(n * trim_pct))
+            
+            trimmed_mean = []
+            for col in range(flat_updates.shape[1]):
+                sorted_vals = np.sort(flat_updates[:, col])
+                trimmed_vals = sorted_vals[k:-k] if n > 2 * k else sorted_vals
+                trimmed_mean.append(np.mean(trimmed_vals))
+                
+            trimmed_mean = np.array(trimmed_mean, dtype=np.float32)
+            
+            # Calculate distance of each node from the trimmed mean
+            distances = np.array([float(np.linalg.norm(u - trimmed_mean)) for u in flat_updates], dtype=np.float32)
+            med_dist = np.median(distances)
+            mad = np.median(np.abs(distances - med_dist))
+            
+            for idx, dist in enumerate(distances):
+                if mad > 1e-8:
+                    mod_z_score = 0.6745 * abs(dist - med_dist) / mad
+                else:
+                    mod_z_score = 0.0 if abs(dist - med_dist) < 1e-5 else 999.0
+
+                if mod_z_score > self.mad_threshold:
+                    rejected_ids.append(node_ids[idx])
+                else:
+                    valid_ids.append(node_ids[idx])
+                    valid_w.append(weights_list[idx])
+                    valid_b.append(biases_list[idx])
+                    
+            return valid_ids, valid_w, valid_b, rejected_ids
+
+        else: # Default is "MAD" L2 distance from median
+            median_weight = np.median(flat_updates, axis=0)
+            distances = np.array([float(np.linalg.norm(u - median_weight)) for u in flat_updates], dtype=np.float32)
+            med_dist = np.median(distances)
+            mad = np.median(np.abs(distances - med_dist))
+            
+            for idx, dist in enumerate(distances):
+                if mad > 1e-8:
+                    mod_z_score = 0.6745 * abs(dist - med_dist) / mad
+                else:
+                    mod_z_score = 0.0 if abs(dist - med_dist) < 1e-5 else 999.0
+
+                if mod_z_score > self.mad_threshold:
+                    rejected_ids.append(node_ids[idx])
+                else:
+                    valid_ids.append(node_ids[idx])
+                    valid_w.append(weights_list[idx])
+                    valid_b.append(biases_list[idx])
+
+            return valid_ids, valid_w, valid_b, rejected_ids

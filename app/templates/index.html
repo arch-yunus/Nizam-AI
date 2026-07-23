@@ -155,6 +155,57 @@
                             <p>Sistem genelinde anlık CPU kullanım yüzdesi.</p>
                         </div>
                     </div>
+
+                    <!-- Kapsamlı Edge Donanım Profili ve Hassasiyet Profiler Kartı -->
+                    <div class="glass-card col-12">
+                        <div class="card-header">
+                            <h3>Uç Bilişim (Edge HW) Donanım ve Hassasiyet Analizi</h3>
+                            <i class="fa-solid fa-sliders text-cyan"></i>
+                        </div>
+                        <div class="profile-config-container" style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px;">
+                            <div class="form-group" style="flex: 1; min-width: 200px;">
+                                <label for="hw-target-select">Hedef Uç Donanım (HW Target):</label>
+                                <select id="hw-target-select" style="background: rgba(15, 23, 42, 0.8); color: #fff; border: 1px solid rgba(0, 242, 254, 0.3); padding: 8px 12px; border-radius: 5px; width: 100%; font-family: inherit;">
+                                    <option value="Generic Mobile">Akıllı Telefon (Generic Mobile - 3.5W)</option>
+                                    <option value="ARM Cortex-M4/M7">ARM Cortex-M4/M7 Mikrodenetleyici (0.15W)</option>
+                                    <option value="RISC-V Vector">RISC-V Vector Gömülü Sistem (0.12W)</option>
+                                    <option value="Raspberry Pi 5">Raspberry Pi 5 (SBC - 4.5W)</option>
+                                    <option value="NVIDIA Jetson Orin Nano">NVIDIA Jetson Orin Nano (Edge GPU - 12W)</option>
+                                    <option value="Default Server">Klasik Bulut GPU Sunucu (250W)</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex: 1; min-width: 200px;">
+                                <label for="quant-mode-select">Nicemleme Modu (Precision):</label>
+                                <select id="quant-mode-select" style="background: rgba(15, 23, 42, 0.8); color: #fff; border: 1px solid rgba(0, 242, 254, 0.3); padding: 8px 12px; border-radius: 5px; width: 100%; font-family: inherit;">
+                                    <option value="FP32">Float32 (Nicemlemesiz - 32-bit)</option>
+                                    <option value="INT8">Int8 (Optimum Edge - 8-bit)</option>
+                                    <option value="INT4">Int4 (Ultra Sıkıştırılmış - 4-bit)</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex: 1; min-width: 200px;">
+                                <label for="param-size-input">Model Parametre Sayısı (Ağırlıklar):</label>
+                                <input type="number" id="param-size-input" value="1000000" min="1000" max="100000000" style="background: rgba(15, 23, 42, 0.8); color: #fff; border: 1px solid rgba(0, 242, 254, 0.3); padding: 8px 12px; border-radius: 5px; width: 100%; font-family: inherit;">
+                            </div>
+                        </div>
+                        <div class="profile-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 15px;">
+                            <div class="stat-box" style="text-align: center;">
+                                <span style="font-size: 0.85rem; color: #8e9bb3; display: block;">Simüle Edilen Gecikme</span>
+                                <strong id="prof-latency" style="font-size: 1.5rem; color: #00f2fe;">-- ms</strong>
+                            </div>
+                            <div class="stat-box" style="text-align: center;">
+                                <span style="font-size: 0.85rem; color: #8e9bb3; display: block;">Bellek Ayak İzi</span>
+                                <strong id="prof-memory" style="font-size: 1.5rem; color: #a855f7;">-- MB</strong>
+                            </div>
+                            <div class="stat-box" style="text-align: center;">
+                                <span style="font-size: 0.85rem; color: #8e9bb3; display: block;">Simüle Anlık Güç</span>
+                                <strong id="prof-power" style="font-size: 1.5rem; color: #f59e0b;">-- W</strong>
+                            </div>
+                            <div class="stat-box" style="text-align: center;">
+                                <span style="font-size: 0.85rem; color: #8e9bb3; display: block;">İşlem Başına Enerji</span>
+                                <strong id="prof-energy" style="font-size: 1.5rem; color: #10b981;">-- J</strong>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -371,6 +422,15 @@
                             </div>
                         </div>
 
+                        <div class="form-group" style="margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+                            <label for="fl-byzantine-mode" style="font-weight: 600; color: #8e9bb3;">Bizans Defans Filtresi:</label>
+                            <select id="fl-byzantine-mode" style="background: rgba(15, 23, 42, 0.8); color: #fff; border: 1px solid rgba(0, 242, 254, 0.3); padding: 6px 12px; border-radius: 5px; font-family: inherit;">
+                                <option value="MAD">MAD (Median Absolute Deviation)</option>
+                                <option value="TRIMMED_MEAN">Trimmed Mean (Kırpılmış Ortalama)</option>
+                                <option value="KRUM">Krum Seçim Algoritması</option>
+                            </select>
+                        </div>
+
                         <div class="network-action-container">
                             <button id="fl-round-btn" class="action-btn border-neon">
                                 <i class="fa-solid fa-rotate"></i> Federated Averaging (FedAvg) Yuvarlağı Çalıştır
@@ -510,6 +570,9 @@
                             <button id="toggle-robotics-gps-btn" class="action-btn red">
                                 <i class="fa-solid fa-satellite-dish"></i> GPS Kesintisi (EW Jamming) Oluştur
                             </button>
+                            <button id="toggle-robotics-spoofing-btn" class="action-btn red">
+                                <i class="fa-solid fa-satellite"></i> GPS Spoofing Saldırısı Yap
+                            </button>
                             <button id="run-pqc-tunnel-btn" class="action-btn violet-glow-btn">
                                 <i class="fa-solid fa-lock"></i> PQC Kyber-1024 Tünel Şifreleme Testi
                             </button>
@@ -528,6 +591,10 @@
                             <div class="telemetry-item">
                                 <span>GPS Sinyal Durumu:</span>
                                 <strong id="robot-gps-status" class="text-cyan">Aktif (Sinyal Güçlü)</strong>
+                            </div>
+                            <div class="telemetry-item">
+                                <span>GPS Doğrulama (Anti-Spoof):</span>
+                                <strong id="robot-anti-spoof-status" class="text-emerald">Doğrulandı (Güvenli)</strong>
                             </div>
                         </div>
                     </div>

@@ -56,6 +56,36 @@ if HAS_CPP_CORE:
     ]
     _lib.quantize_binary.restype = None
 
+    # void quantize_int4(const float* input, int8_t* output, int size, float scale, int8_t zero_point);
+    _lib.quantize_int4.argtypes = [
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_int8),
+        ctypes.c_int,
+        ctypes.c_float,
+        ctypes.c_int8
+    ]
+    _lib.quantize_int4.restype = None
+
+    # void dequantize_int4(const int8_t* input, float* output, int size, float scale, int8_t zero_point);
+    _lib.dequantize_int4.argtypes = [
+        ctypes.POINTER(ctypes.c_int8),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.c_int,
+        ctypes.c_float,
+        ctypes.c_int8
+    ]
+    _lib.dequantize_int4.restype = None
+
+    # void simulate_hardware_vector_ops(const float* a, const float* b, float* result, int size, int hardware_type);
+    _lib.simulate_hardware_vector_ops.argtypes = [
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.c_int,
+        ctypes.c_int
+    ]
+    _lib.simulate_hardware_vector_ops.restype = None
+
     # int evaluate_symbolic_clause(const float* features, int feature_count, const float* conditions, int condition_count);
     _lib.evaluate_symbolic_clause.argtypes = [
         ctypes.POINTER(ctypes.c_float),
@@ -85,6 +115,25 @@ def py_quantize_binary(input_array):
     input_arr = np.array(input_array, dtype=np.float32)
     binary = np.where(input_arr >= 0.0, 1, -1)
     return binary.astype(np.int8)
+
+def py_quantize_int4(input_array, scale, zero_point):
+    if scale == 0.0:
+        scale = 1.0
+    input_arr = np.array(input_array, dtype=np.float32)
+    scaled = (input_arr / scale) + zero_point
+    rounded = np.round(scaled)
+    clipped = np.clip(rounded, -8, 7)
+    return clipped.astype(np.int8)
+
+def py_dequantize_int4(input_array, scale, zero_point):
+    input_arr = np.array(input_array, dtype=np.int8)
+    dequantized = (input_arr.astype(np.float32) - zero_point) * scale
+    return dequantized
+
+def py_simulate_hardware_vector_ops(a_list, b_list, hardware_type):
+    a_arr = np.array(a_list, dtype=np.float32)
+    b_arr = np.array(b_list, dtype=np.float32)
+    return (a_arr + b_arr).tolist()
 
 def py_evaluate_symbolic_clause(features, conditions):
     # conditions is a list of tuples: (feature_idx, relation, threshold)
@@ -144,6 +193,46 @@ def quantize_binary(float_list):
         return np.array(c_output, dtype=np.int8)
     else:
         return py_quantize_binary(float_list)
+
+def quantize_int4(float_list, scale, zero_point):
+    """
+    Quantizes a list of floats into 4-bit integers.
+    """
+    if HAS_CPP_CORE:
+        size = len(float_list)
+        c_input = (ctypes.c_float * size)(*float_list)
+        c_output = (ctypes.c_int8 * size)()
+        _lib.quantize_int4(c_input, c_output, size, scale, zero_point)
+        return np.array(c_output, dtype=np.int8)
+    else:
+        return py_quantize_int4(float_list, scale, zero_point)
+
+def dequantize_int4(int8_list, scale, zero_point):
+    """
+    Dequantizes a list of 4-bit integers back to floats.
+    """
+    if HAS_CPP_CORE:
+        size = len(int8_list)
+        c_input = (ctypes.c_int8 * size)(*int8_list)
+        c_output = (ctypes.c_float * size)()
+        _lib.dequantize_int4(c_input, c_output, size, scale, zero_point)
+        return np.array(c_output, dtype=np.float32)
+    else:
+        return py_dequantize_int4(int8_list, scale, zero_point)
+
+def simulate_hardware_vector_ops(a_list, b_list, hardware_type=0):
+    """
+    Simulates hardware instruction vector operations for benchmarks.
+    """
+    if HAS_CPP_CORE:
+        size = len(a_list)
+        c_a = (ctypes.c_float * size)(*a_list)
+        c_b = (ctypes.c_float * size)(*b_list)
+        c_res = (ctypes.c_float * size)()
+        _lib.simulate_hardware_vector_ops(c_a, c_b, c_res, size, hardware_type)
+        return np.array(c_res, dtype=np.float32).tolist()
+    else:
+        return py_simulate_hardware_vector_ops(a_list, b_list, hardware_type)
 
 def evaluate_symbolic_clause(features, conditions):
     """
